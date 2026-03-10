@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-dark-600;
+  }
+  
+  html {
+    @apply scroll-smooth;
+  }
+  
+  body {
+    @apply bg-black text-dark-200 antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+
+  ::selection {
+    @apply bg-accent-blue/30 text-white;
+  }
+}
+
+@layer components {
+  /* Primary Button - Modern X style */
+  .btn-primary {
+    @apply relative overflow-hidden bg-accent-blue text-white font-bold px-6 py-3 rounded-full transition-all duration-200;
+    @apply hover:bg-accent-blue-dark active:scale-95;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Secondary Button - Outlined */
+  .btn-secondary {
+    @apply relative bg-transparent text-dark-200 border border-dark-600 font-semibold px-6 py-3 rounded-full;
+    @apply transition-all duration-200 hover:bg-dark-700 hover:border-dark-500;
+    @apply active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Ghost Button - Minimal */
+  .btn-ghost {
+    @apply relative bg-transparent text-dark-300 font-medium px-4 py-2 rounded-full;
+    @apply transition-all duration-200 hover:bg-dark-800;
+    @apply active:scale-95;
+  }
+
+  /* Card - Dark themed with subtle border */
+  .card {
+    @apply relative bg-dark-800 border border-dark-600 rounded-2xl p-6;
+    @apply transition-all duration-200 hover:border-dark-500;
+  }
+
+  /* Card with glow effect */
+  .card-glow {
+    @apply card;
+    @apply hover:shadow-glow-blue;
+  }
+
+  /* Glass card effect */
+  .card-glass {
+    @apply relative backdrop-blur-xl bg-dark-800/50 border border-dark-600/50 rounded-2xl p-6;
+    @apply transition-all duration-200 hover:bg-dark-800/70;
+  }
+
+  /* Input Field - Dark themed */
+  .input-field {
+    @apply w-full bg-dark-900 text-dark-200 border border-dark-600 rounded-xl px-4 py-3;
+    @apply placeholder:text-dark-400 transition-all duration-200;
+    @apply focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue/50;
+    @apply hover:border-dark-500;
+  }
+
+  /* Label */
+  .label {
+    @apply block text-sm font-medium text-dark-300 mb-2;
+  }
+
+  /* Link with hover effect */
+  .link {
+    @apply text-accent-blue hover:underline transition-colors duration-150;
+  }
+
+  /* Divider */
+  .divider {
+    @apply border-t border-dark-600;
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+    @apply bg-dark-700 text-dark-200 border border-dark-600;
+  }
+
+  /* Scrollbar styling */
+  .custom-scrollbar::-webkit-scrollbar {
+    @apply w-1.5 h-1.5;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-dark-900;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-dark-600 rounded-full hover:bg-dark-500;
+  }
+}
+
+@layer utilities {
+  /* Text gradient */
+  .text-gradient {
+    @apply bg-gradient-accent bg-clip-text text-transparent;
+  }
+
+  /* Shimmer effect */
+  .shimmer::after {
+    content: '';
+    @apply absolute inset-0 bg-gradient-shimmer;
+    animation: shimmer 2s infinite;
+  }
+
+  /* Focus visible for accessibility */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue focus-visible:ring-offset-2 focus-visible:ring-offset-dark-900;
+  }
+}
