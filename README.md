@@ -30,3 +30,4 @@ cd client && npm install && npm run dev
 
 Set up `.env` in `server/` and `.env.local` in `client/` with your credentials before running.
 # FreakyTravellers
+# FreakyTravellers
