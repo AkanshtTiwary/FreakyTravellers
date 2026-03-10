@@ -194,7 +194,7 @@ const tripSchema = new mongoose.Schema(
       {
         type: {
           type: String,
-          enum: ['info', 'warning', 'suggestion', 'alternative'],
+          enum: ['info', 'warning', 'suggestion', 'alternative', 'tip'],
         },
         message: String,
         timestamp: {

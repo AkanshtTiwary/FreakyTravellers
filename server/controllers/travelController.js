@@ -14,12 +14,13 @@ const { asyncHandler } = require('../middleware/errorHandler');
  * @access  Private or Public (with optional auth)
  */
 exports.optimizeTrip = asyncHandler(async (req, res) => {
-  const { source, destination, totalBudget, numberOfTravelers = 1 } = req.body;
+  const { source, destination, totalBudget, numberOfTravelers = 1, numberOfDays } = req.body;
 
   console.log(`\n🚀 Starting trip optimization...`);
   console.log(`📍 From: ${source} → To: ${destination}`);
   console.log(`💰 Budget: ₹${totalBudget}`);
   console.log(`👥 Travelers: ${numberOfTravelers}`);
+  if (numberOfDays) console.log(`📅 Days: ${numberOfDays}`);
 
   // Run optimization algorithm
   const optimizationResult = await optimizeTripBudget({
@@ -27,6 +28,7 @@ exports.optimizeTrip = asyncHandler(async (req, res) => {
     destination,
     totalBudget: parseFloat(totalBudget),
     numberOfTravelers: parseInt(numberOfTravelers),
+    numberOfDays: numberOfDays ? parseInt(numberOfDays) : undefined,
   });
 
   // Create trip document

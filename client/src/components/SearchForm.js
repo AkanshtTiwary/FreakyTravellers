@@ -3,7 +3,7 @@
 import { useState, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { MapPin, DollarSign, Loader2, Search, Users, Sparkles } from 'lucide-react';
+import { MapPin, DollarSign, Loader2, Search, Users, Sparkles, Calendar } from 'lucide-react';
 import { tripAPI } from '@/utils/api';
 import useTripStore from '@/store/tripStore';
 import toast from 'react-hot-toast';
@@ -17,6 +17,7 @@ function SearchForm() {
     destination: '',
     totalBudget: '',
     numberOfTravelers: 1,
+    numberOfDays: 3,
   });
   
   const [isSearching, setIsSearching] = useState(false);
@@ -33,7 +34,7 @@ function SearchForm() {
     e.preventDefault();
 
     // Validation
-    if (!formData.source || !formData.destination || !formData.totalBudget) {
+    if (!formData.source || !formData.destination || !formData.totalBudget || !formData.numberOfDays) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -121,7 +122,7 @@ function SearchForm() {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
           {/* Total Budget */}
           <div className="space-y-2">
             <label className="label flex items-center gap-2">
@@ -166,6 +167,31 @@ function SearchForm() {
               <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400" />
             </div>
           </div>
+
+          {/* Number of Days */}
+          <div className="space-y-2">
+            <label className="label flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-accent-blue" />
+              <span>Number of Days</span>
+              <span className="text-accent-red">*</span>
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                name="numberOfDays"
+                value={formData.numberOfDays}
+                onChange={handleChange}
+                min="1"
+                max="30"
+                className="input-field pl-10 focus:shadow-glow-blue transition-all duration-200"
+                required
+              />
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400" />
+            </div>
+            <p className="text-xs text-dark-400 flex items-center gap-1">
+              <span>1 – 30 days</span>
+            </p>
+          </div>
         </div>
 
         {/* Submit Button */}
@@ -202,11 +228,12 @@ function SearchForm() {
                 How it works
               </p>
               <p className="text-sm text-dark-400 leading-relaxed">
-                We'll find the cheapest transport option and intelligently allocate your remaining budget: 
+                We'll find the cheapest transport and spread your budget across your chosen duration: 
                 <span className="text-accent-green font-medium"> 40% for hotels</span>, 
-                <span className="text-accent-yellow font-medium"> 30% for food</span>, and 
-                <span className="text-accent-blue font-medium"> 30% for local transport</span>. 
-                If budget is low, we'll suggest alternatives!
+                <span className="text-accent-yellow font-medium"> 30% for food</span>, 
+                <span className="text-accent-blue font-medium"> 20% for local transport</span>, and 
+                <span className="text-accent-purple font-medium"> 10% for activities</span>. 
+                Your number of days drives the per-night and per-day budget calculations!
               </p>
             </div>
           </div>
