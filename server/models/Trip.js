@@ -82,7 +82,7 @@ const tripSchema = new mongoose.Schema(
     totalBudget: {
       type: Number,
       required: [true, 'Total budget is required'],
-      min: [500, 'Minimum budget must be ₹500'],
+      min: [1, 'Budget must be at least ₹1'],
     },
     currency: {
       type: String,
@@ -105,14 +105,14 @@ const tripSchema = new mongoose.Schema(
     transport: {
       mode: {
         type: String,
-        enum: ['flight', 'train', 'bus', 'cab', 'mixed'],
-        required: true,
+        enum: ['flight', 'train', 'bus', 'cab', 'mixed', 'rickshaw', 'walk', 'shared-auto'],
+        required: false,
       },
       provider: String,
       class: String, // Economy, Business, Sleeper, AC, Non-AC
       cost: {
         type: Number,
-        required: true,
+        required: false,
       },
       duration: String, // "5h 30m"
       departure: {

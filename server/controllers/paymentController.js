@@ -46,10 +46,13 @@ exports.createOrder = asyncHandler(async (req, res) => {
   }
 
   // Create Razorpay order
+  // receipt must be ≤ 40 chars (Razorpay limit)
+  const receiptSuffix = Date.now().toString().slice(-8); // last 8 digits of timestamp
+  const tripShort = tripId.toString().slice(-8);         // last 8 chars of ObjectId
   const orderOptions = {
     amount: amountInPaise,
     currency: 'INR',
-    receipt: `trip_${tripId}_${Date.now()}`,
+    receipt: `sbt_${tripShort}_${receiptSuffix}`,        // max 21 chars — well within limit
     notes: {
       tripId: tripId,
       userId: req.user.id,
@@ -117,11 +120,12 @@ exports.createOrder = asyncHandler(async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Razorpay Order Creation Error:', error);
+    const razorpayMsg = error?.error?.description || error?.message || 'Unknown error';
+    console.error('Razorpay Order Creation Error:', razorpayMsg, error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to create payment order',
-      error: error.message,
+      message: `Failed to create payment order: ${razorpayMsg}`,
+      error: razorpayMsg,
     });
   }
 });

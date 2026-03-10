@@ -126,8 +126,8 @@ const validateTripSearch = [
     .isNumeric()
     .withMessage('Budget must be a number')
     .custom((value) => {
-      if (parseFloat(value) < 500) {
-        throw new Error('Minimum budget must be ₹500');
+      if (parseFloat(value) < 1) {
+        throw new Error('Budget must be at least ₹1');
       }
       if (parseFloat(value) > 1000000) {
         throw new Error('Maximum budget cannot exceed ₹10,00,000');

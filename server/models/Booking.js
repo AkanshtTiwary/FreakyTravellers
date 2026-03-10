@@ -25,7 +25,11 @@ const bookingSchema = new mongoose.Schema(
     bookingId: {
       type: String,
       unique: true,
-      required: true,
+      default: () => {
+        const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        const randomStr = Math.random().toString(36).substring(2, 7).toUpperCase();
+        return `SBT-${dateStr}-${randomStr}`;
+      },
     },
     bookingDate: {
       type: Date,
@@ -187,15 +191,8 @@ const bookingSchema = new mongoose.Schema(
 
 // ==================== MIDDLEWARE ====================
 
-// Generate unique booking ID before saving
+// Pre-save hook (bookingId is already set by default function above)
 bookingSchema.pre('save', async function (next) {
-  if (!this.bookingId) {
-    // Generate booking ID: SBT-YYYYMMDD-XXXXX
-    const date = new Date();
-    const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
-    const randomStr = Math.random().toString(36).substring(2, 7).toUpperCase();
-    this.bookingId = `SBT-${dateStr}-${randomStr}`;
-  }
   next();
 });
 

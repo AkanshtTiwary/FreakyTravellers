@@ -62,6 +62,7 @@ app.get('/', (req, res) => {
       trips: '/api/trips',
       payments: '/api/payments',
       images: '/api/images',
+      travel: '/api/travel',
     },
   });
 });
@@ -81,6 +82,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/trips', require('./routes/travelRoutes'));
 app.use('/api/payments', require('./routes/paymentRoutes'));
 app.use('/api/images', require('./routes/imageRoutes'));
+app.use('/api/travel', require('./routes/travelPlan.routes'));
 
 // ==================== ERROR HANDLING ====================
 

@@ -47,8 +47,12 @@ exports.optimizeTrip = asyncHandler(async (req, res) => {
     optimizationScore: optimizationResult.optimizationScore,
   };
 
-  // Add transport if found
-  if (optimizationResult.transport) {
+  // Add transport if found AND has valid required fields
+  if (
+    optimizationResult.transport &&
+    optimizationResult.transport.mode &&
+    (optimizationResult.transport.totalCost != null)
+  ) {
     tripData.transport = {
       mode: optimizationResult.transport.mode,
       provider: optimizationResult.transport.provider,

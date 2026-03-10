@@ -5,11 +5,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { tripAPI } from '@/utils/api';
 import useTripStore from '@/store/tripStore';
+import useAuthStore from '@/store/authStore';
 import Navbar from '@/components/Navbar';
+import PaymentModal from '@/components/PaymentModal';
 import {
   Loader2, MapPin, DollarSign, Hotel, Utensils,
   Bus, Plane, Train, Star, Clock, Wallet, Camera, AlertCircle,
-  ChevronRight, Sparkles, ArrowRight, Navigation
+  ChevronRight, Sparkles, ArrowRight, Navigation, CreditCard
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -52,16 +54,30 @@ function ResultsContent() {
   const tripId = searchParams.get('tripId');
   const { tripResult, setTripResult } = useTripStore();
 
+  const { user, isAuthenticated } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [optimization, setOptimization] = useState(null);
   const [tripMeta, setTripMeta] = useState(null);
   const [heroPhoto, setHeroPhoto] = useState(null);
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+
+  // Normalize tripMeta so source/destination are always plain strings
+  // (getTripById returns raw Trip doc where source/destination are { city, country } objects)
+  const normalizeMeta = (meta) => {
+    if (!meta) return null;
+    return {
+      ...meta,
+      source: meta.source?.city ?? meta.source ?? '',
+      destination: meta.destination?.city ?? meta.destination ?? '',
+      budget: meta.totalBudget ?? meta.budget,
+    };
+  };
 
   useEffect(() => {
     if (tripResult) {
       // API returns: { tripId, optimization: {...}, trip: { source, destination, budget } }
       setOptimization(tripResult.optimization || tripResult);
-      setTripMeta(tripResult.trip || null);
+      setTripMeta(normalizeMeta(tripResult.trip || null));
     } else if (tripId) {
       loadTrip();
     }
@@ -78,8 +94,8 @@ function ResultsContent() {
     try {
       const response = await tripAPI.getTripById(tripId);
       if (response.success) {
-        setOptimization(response.data.optimization || response.data);
-        setTripMeta(response.data.trip || null);
+        setOptimization(response.data.optimization || response.data.trip || response.data);
+        setTripMeta(normalizeMeta(response.data.trip || null));
         setTripResult(response.data);
       }
     } catch (error) {
@@ -392,14 +408,46 @@ function ResultsContent() {
             </motion.div>
           )}
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="text-center mt-10">
-            <button onClick={() => router.push('/')} className="btn-primary">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
+          >
+            <button onClick={() => router.push('/')} className="btn-secondary w-full sm:w-auto">
               Plan Another Trip
             </button>
+
+            {isAuthenticated ? (
+              <button
+                onClick={() => setIsPaymentOpen(true)}
+                className="btn-primary w-full sm:w-auto flex items-center justify-center gap-2"
+              >
+                <CreditCard className="w-4 h-4" />
+                Book &amp; Pay Now
+              </button>
+            ) : (
+              <button
+                onClick={() => router.push('/login')}
+                className="btn-primary w-full sm:w-auto flex items-center justify-center gap-2"
+              >
+                Login to Book
+              </button>
+            )}
           </motion.div>
 
         </div>
       </div>
+
+      {/* Razorpay Payment Modal */}
+      <PaymentModal
+        isOpen={isPaymentOpen}
+        onClose={() => setIsPaymentOpen(false)}
+        tripId={tripId || tripResult?.tripId}
+        amount={tripMeta?.budget || optimization?.budgetBreakdown?.total || 0}
+        tripMeta={tripMeta}
+        userInfo={user}
+      />
     </div>
   );
 }

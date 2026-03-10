@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import useAuthStore from '@/store/authStore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, User, LogOut, Plane } from 'lucide-react';
+import { Menu, X, User, LogOut, Plane, BookOpen } from 'lucide-react';
 
 // Memoized navigation link component
 const NavLink = memo(({ href, active, children }) => (
@@ -83,6 +83,9 @@ function Navbar() {
             
             {isAuthenticated ? (
               <>
+                <NavLink href="/my-bookings" active={pathname === '/my-bookings'}>
+                  My Bookings
+                </NavLink>
                 {/* User Profile Link */}
                 <Link
                   href="/profile"
@@ -179,6 +182,13 @@ function Navbar() {
                       className="block w-full mb-2 px-4 py-3 bg-dark-800 text-accent-blue rounded-xl text-center hover:bg-dark-700 transition-colors duration-150"
                     >
                       View Profile
+                    </Link>
+                    <Link
+                      href="/my-bookings"
+                      onClick={() => setIsOpen(false)}
+                      className="block w-full mb-2 px-4 py-3 bg-dark-800 text-accent-green rounded-xl text-center hover:bg-dark-700 transition-colors duration-150 flex items-center justify-center gap-2"
+                    >
+                      My Bookings
                     </Link>
                     <button
                       onClick={() => {
