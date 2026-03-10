@@ -43,6 +43,7 @@ const optimizeTripBudget = async ({
       budgetBreakdown: null,
       recommendations: {
         restaurants: [],
+        freeFoodSources: [],
         localTransport: [],
         attractions: [],
       },
@@ -63,6 +64,10 @@ const optimizeTripBudget = async ({
       transportOptions = getEstimatedTransportCosts(source, destination);
     }
 
+    // Always append ultra-cheap local options (rickshaw, shared-auto, bus, walk)
+    // so any budget — even ₹1 — finds at least one viable transport option
+    transportOptions = [...transportOptions, ...getUltraBudgetTransportOptions(source, destination)];
+
     // ========== STEP 2: Sort — real API data first, then by price ==========
     // Amadeus/real-API results are prioritised over fallback estimates
     transportOptions.sort((a, b) => {
@@ -76,31 +81,62 @@ const optimizeTripBudget = async ({
     // ========== STEP 3: Find Affordable Transport ==========
     let selectedTransport = null;
     let remainingBudget = 0;
+    let budgetMode = 'normal'; // 'normal' | 'tight' | 'ultra'
 
+    // Pass 1: Standard — allow up to 70% of budget for transport
     for (const transport of transportOptions) {
       const transportCost = transport.totalCost * numberOfTravelers;
-
-      // Allow up to 70% of budget for transport (flights can be expensive)
       if (transportCost <= totalBudget * 0.7) {
         selectedTransport = transport;
         remainingBudget = totalBudget - transportCost;
+        budgetMode = 'normal';
         break;
       }
     }
 
-    // If no affordable transport found, check if budget is unrealistic
+    // Pass 2: Tight budget — allow 100% for transport; use free food/accommodation
     if (!selectedTransport) {
-      console.log('⚠️ Budget too low for any transport option');
+      for (const transport of transportOptions) {
+        const transportCost = transport.totalCost * numberOfTravelers;
+        if (transportCost <= totalBudget) {
+          selectedTransport = transport;
+          remainingBudget = Math.max(0, totalBudget - transportCost);
+          budgetMode = 'tight';
+          break;
+        }
+      }
+    }
+
+    // Pass 3: Ultra mode — use cheapest available, rely entirely on free resources
+    if (!selectedTransport) {
+      const sortedByPrice = [...transportOptions].sort((a, b) => a.totalCost - b.totalCost);
+      if (sortedByPrice.length > 0) {
+        selectedTransport = sortedByPrice[0];
+        remainingBudget = 0;
+        budgetMode = 'ultra';
+      }
+    }
+
+    // Ultra/impossible mode: build community-resource plan
+    if (!selectedTransport || budgetMode === 'ultra') {
+      console.log('⚠️ Ultra-low budget — building community-resource plan');
       return handleLowBudgetScenario({
         source,
         destination,
         totalBudget,
         numberOfTravelers,
-        cheapestTransport: transportOptions[0],
+        cheapestTransport: selectedTransport || transportOptions[0] || null,
       });
     }
 
     optimizationResult.transport = selectedTransport;
+
+    if (budgetMode === 'tight') {
+      optimizationResult.optimizationNotes.push({
+        type: 'warning',
+        message: `Tight budget detected. Free langar/temple meals and dharamshala stays recommended to stretch your trip.`,
+      });
+    }
 
     optimizationResult.optimizationNotes.push({
       type: 'info',
