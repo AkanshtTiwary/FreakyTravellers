@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
-import SearchForm from '@/components/SearchForm';
+import { MapPin, ChevronLeft, ChevronRight, Sparkles, Search, Loader2, Users, DollarSign, Calendar, ArrowRight } from 'lucide-react';
+import { tripAPI } from '@/utils/api';
+import useTripStore from '@/store/tripStore';
+import toast from 'react-hot-toast';
 
 const destinations = [
   {
@@ -186,8 +189,52 @@ const destinations = [
 const INTERVAL = 5000;
 
 export default function DestinationCarousel() {
+  const router = useRouter();
+  const { setTripResult, setLoading } = useTripStore();
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [formData, setFormData] = useState({
+    source: '',
+    destination: '',
+    totalBudget: '',
+    numberOfTravelers: 1,
+    numberOfDays: 3,
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.source || !formData.destination || !formData.totalBudget || !formData.numberOfDays) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+    if (parseFloat(formData.totalBudget) < 500) {
+      toast.error('Minimum budget must be ₹500');
+      return;
+    }
+    setIsSearching(true);
+    setLoading(true);
+    try {
+      const response = await tripAPI.optimizeTrip(formData);
+      if (response.success) {
+        setTripResult(response.data);
+        toast.success('Trip optimized successfully!');
+        router.push(`/results?tripId=${response.data.tripId}`);
+      } else {
+        toast.error(response.message || 'Failed to optimize trip');
+      }
+    } catch (error) {
+      toast.error(error || 'Failed to optimize trip. Please try again.');
+    } finally {
+      setIsSearching(false);
+      setLoading(false);
+    }
+  };
 
   const next = useCallback(() => {
     setActiveIndex((prev) => (prev + 1) % destinations.length);
@@ -295,15 +342,131 @@ export default function DestinationCarousel() {
             </motion.p>
           </motion.div>
 
-          {/* Search form */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
+          {/* ── Inline search strip (Airbnb-style) ── */}
+          <motion.form
+            onSubmit={handleSubmit}
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.45 }}
             className="w-full max-w-5xl"
           >
-            <SearchForm />
-          </motion.div>
+            {/* Single pill bar */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-0 bg-black/60 backdrop-blur-2xl border border-white/30 rounded-2xl sm:rounded-full shadow-2xl shadow-black/40 px-2 py-2 sm:py-1.5">
+
+              {/* From */}
+              <div className="flex items-center gap-2.5 flex-1 min-w-0 px-4 py-2 sm:border-r border-white/25">
+                <MapPin className="w-4 h-4 text-accent-blue flex-shrink-0" />
+                <div className="flex flex-col min-w-0">
+                  <span className="text-white/75 text-[10px] font-semibold uppercase tracking-widest leading-none mb-1">From</span>
+                  <input
+                    type="text"
+                    name="source"
+                    value={formData.source}
+                    onChange={handleChange}
+                    placeholder="Origin city"
+                    className="bg-transparent text-white placeholder-white/55 text-sm font-medium outline-none w-full"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Arrow divider */}
+              <div className="hidden sm:flex items-center justify-center px-1">
+                <ArrowRight className="w-3.5 h-3.5 text-white/50" />
+              </div>
+
+              {/* To */}
+              <div className="flex items-center gap-2.5 flex-1 min-w-0 px-4 py-2 sm:border-r border-white/25">
+                <MapPin className="w-4 h-4 text-accent-purple flex-shrink-0" />
+                <div className="flex flex-col min-w-0">
+                  <span className="text-white/75 text-[10px] font-semibold uppercase tracking-widest leading-none mb-1">To</span>
+                  <input
+                    type="text"
+                    name="destination"
+                    value={formData.destination}
+                    onChange={handleChange}
+                    placeholder="Destination"
+                    className="bg-transparent text-white placeholder-white/55 text-sm font-medium outline-none w-full"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Budget */}
+              <div className="flex items-center gap-2.5 w-full sm:w-36 px-4 py-2 sm:border-r border-white/25">
+                <DollarSign className="w-4 h-4 text-accent-green flex-shrink-0" />
+                <div className="flex flex-col min-w-0">
+                  <span className="text-white/75 text-[10px] font-semibold uppercase tracking-widest leading-none mb-1">Budget ₹</span>
+                  <input
+                    type="number"
+                    name="totalBudget"
+                    value={formData.totalBudget}
+                    onChange={handleChange}
+                    placeholder="e.g. 5000"
+                    min="500"
+                    className="bg-transparent text-white placeholder-white/55 text-sm font-medium outline-none w-full"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Travelers */}
+              <div className="flex items-center gap-2.5 w-full sm:w-28 px-4 py-2 sm:border-r border-white/25">
+                <Users className="w-4 h-4 text-yellow-400 flex-shrink-0" />
+                <div className="flex flex-col min-w-0">
+                  <span className="text-white/75 text-[10px] font-semibold uppercase tracking-widest leading-none mb-1">Travelers</span>
+                  <input
+                    type="number"
+                    name="numberOfTravelers"
+                    value={formData.numberOfTravelers}
+                    onChange={handleChange}
+                    min="1"
+                    max="10"
+                    className="bg-transparent text-white placeholder-white/55 text-sm font-medium outline-none w-full"
+                  />
+                </div>
+              </div>
+
+              {/* Days */}
+              <div className="flex items-center gap-2.5 w-full sm:w-24 px-4 py-2">
+                <Calendar className="w-4 h-4 text-accent-blue flex-shrink-0" />
+                <div className="flex flex-col min-w-0">
+                  <span className="text-white/75 text-[10px] font-semibold uppercase tracking-widest leading-none mb-1">Days</span>
+                  <input
+                    type="number"
+                    name="numberOfDays"
+                    value={formData.numberOfDays}
+                    onChange={handleChange}
+                    min="1"
+                    max="30"
+                    className="bg-transparent text-white placeholder-white/55 text-sm font-medium outline-none w-full"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Search button */}
+              <motion.button
+                type="submit"
+                disabled={isSearching}
+                whileTap={{ scale: 0.96 }}
+                whileHover={{ scale: 1.03 }}
+                className="flex-shrink-0 flex items-center gap-2 px-6 py-3 bg-accent-blue hover:bg-blue-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold text-sm rounded-xl sm:rounded-full transition-colors duration-200 shadow-lg shadow-blue-500/30"
+              >
+                {isSearching ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /><span>Finding...</span></>
+                ) : (
+                  <><Search className="w-4 h-4" /><span>Search</span></>
+                )}
+              </motion.button>
+            </div>
+
+            {/* Subtle hint */}
+            <p className="text-center text-white/60 text-xs mt-3 tracking-wide">
+              <Sparkles className="inline w-3 h-3 mr-1 text-accent-blue" />
+              AI picks the cheapest transport &amp; splits your budget across hotels, food &amp; activities
+            </p>
+          </motion.form>
         </div>
 
         {/* ── Bottom destination strip ── */}
