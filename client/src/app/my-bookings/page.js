@@ -54,11 +54,11 @@ export default function MyBookingsPage() {
     try {
       const res = await paymentAPI.cancelBooking(bookingId, 'User requested cancellation');
       if (res.success) {
-        toast.success('Booking cancelled');
+        toast.success('Booking cancelled successfully. Refund will be processed in 5-7 business days.');
         fetchBookings();
       }
     } catch (err) {
-      toast.error('Failed to cancel booking');
+      toast.error(typeof err === 'string' ? err : 'Failed to cancel booking');
     }
   };
 
@@ -172,7 +172,7 @@ export default function MyBookingsPage() {
 
                     {/* Actions */}
                     <div className="flex items-center gap-3">
-                      {booking.status === 'pending' && (
+                      {booking.status === 'confirmed' && (
                         <button
                           onClick={() => handleCancel(booking._id)}
                           className="text-xs text-red-400 hover:text-red-300 border border-red-500/30 hover:border-red-400/50 px-3 py-1.5 rounded-lg transition-colors"

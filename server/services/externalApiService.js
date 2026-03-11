@@ -535,20 +535,7 @@ const getAttractions = async (destination) => {
  * Fallback attractions data
  */
 const getFallbackAttractions = (destination) => {
-  return [
-    {
-      name: `Historic Site - ${destination}`,
-      rating: 4.5,
-      types: ['tourist_attraction', 'point_of_interest'],
-      apiSource: 'fallback',
-    },
-    {
-      name: `Cultural Center - ${destination}`,
-      rating: 4.3,
-      types: ['museum', 'tourist_attraction'],
-      apiSource: 'fallback',
-    },
-  ];
+  return [];
 };
 
 // ==================== HELPER FUNCTIONS ====================

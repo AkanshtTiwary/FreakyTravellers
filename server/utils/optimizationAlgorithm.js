@@ -679,70 +679,391 @@ const getLocalTransportSuggestions = (dailyBudget) => {
 /**
  * Get attraction suggestions with real city data
  */
-const getAttractionSuggestions = (city, budget) => {
+const getAttractionSuggestions = (city, activitiesBudget) => {
   const cityAttractions = {
+    // ── Metro Cities ──────────────────────────────────────────────────────────
     mumbai: [
       { name: 'Gateway of India', type: 'Monument', estimatedCost: 0, rating: 4.6, timings: 'All day' },
       { name: 'Marine Drive', type: 'Promenade', estimatedCost: 0, rating: 4.5, timings: 'All day' },
       { name: 'Elephanta Caves', type: 'Heritage', estimatedCost: 40, rating: 4.3, timings: '9 AM - 5:30 PM' },
       { name: 'Chhatrapati Shivaji Terminus', type: 'Heritage', estimatedCost: 0, rating: 4.6, timings: 'All day' },
+      { name: 'Juhu Beach', type: 'Beach', estimatedCost: 0, rating: 4.1, timings: 'All day' },
     ],
     delhi: [
       { name: 'Red Fort', type: 'Monument', estimatedCost: 35, rating: 4.4, timings: '9:30 AM - 4:30 PM' },
       { name: 'Qutub Minar', type: 'Monument', estimatedCost: 35, rating: 4.5, timings: '7 AM - 5 PM' },
       { name: 'India Gate', type: 'Monument', estimatedCost: 0, rating: 4.6, timings: 'All day' },
-      { name: 'Humayun\'s Tomb', type: 'Heritage', estimatedCost: 35, rating: 4.5, timings: '6 AM - 6 PM' },
+      { name: "Humayun's Tomb", type: 'Heritage', estimatedCost: 35, rating: 4.5, timings: '6 AM - 6 PM' },
+      { name: 'Lotus Temple', type: 'Temple', estimatedCost: 0, rating: 4.5, timings: '9 AM - 5:30 PM' },
+      { name: 'Chandni Chowk', type: 'Market', estimatedCost: 0, rating: 4.3, timings: '9 AM - 9 PM' },
     ],
-    jaipur: [
-      { name: 'Amber Fort', type: 'Fort', estimatedCost: 100, rating: 4.6, timings: '8 AM - 5:30 PM' },
-      { name: 'Hawa Mahal', type: 'Palace', estimatedCost: 50, rating: 4.5, timings: '9 AM - 4:30 PM' },
-      { name: 'City Palace', type: 'Palace', estimatedCost: 200, rating: 4.5, timings: '9:30 AM - 5 PM' },
-      { name: 'Jantar Mantar', type: 'Observatory', estimatedCost: 50, rating: 4.3, timings: '9 AM - 4:30 PM' },
-    ],
-    goa: [
-      { name: 'Calangute Beach', type: 'Beach', estimatedCost: 0, rating: 4.3, timings: 'All day' },
-      { name: 'Basilica of Bom Jesus', type: 'Church', estimatedCost: 0, rating: 4.6, timings: '9 AM - 6:30 PM' },
-      { name: 'Fort Aguada', type: 'Fort', estimatedCost: 0, rating: 4.4, timings: '9:30 AM - 6 PM' },
-      { name: 'Dudhsagar Falls', type: 'Waterfall', estimatedCost: 400, rating: 4.6, timings: '6 AM - 6 PM' },
-    ],
-    bangalore: [
-      { name: 'Lalbagh Botanical Garden', type: 'Garden', estimatedCost: 20, rating: 4.4, timings: '6 AM - 7 PM' },
-      { name: 'Cubbon Park', type: 'Park', estimatedCost: 0, rating: 4.4, timings: '6 AM - 6 PM' },
-      { name: 'Bangalore Palace', type: 'Palace', estimatedCost: 230, rating: 4.2, timings: '10 AM - 5:30 PM' },
-      { name: 'ISKCON Temple', type: 'Temple', estimatedCost: 0, rating: 4.6, timings: '7:15 AM - 8:30 PM' },
-    ],
-    bengaluru: [
-      { name: 'Lalbagh Botanical Garden', type: 'Garden', estimatedCost: 20, rating: 4.4, timings: '6 AM - 7 PM' },
-      { name: 'Cubbon Park', type: 'Park', estimatedCost: 0, rating: 4.4, timings: '6 AM - 6 PM' },
-      { name: 'Bangalore Palace', type: 'Palace', estimatedCost: 230, rating: 4.2, timings: '10 AM - 5:30 PM' },
-      { name: 'ISKCON Temple', type: 'Temple', estimatedCost: 0, rating: 4.6, timings: '7:15 AM - 8:30 PM' },
+    'new delhi': [
+      { name: 'Red Fort', type: 'Monument', estimatedCost: 35, rating: 4.4, timings: '9:30 AM - 4:30 PM' },
+      { name: 'Qutub Minar', type: 'Monument', estimatedCost: 35, rating: 4.5, timings: '7 AM - 5 PM' },
+      { name: 'India Gate', type: 'Monument', estimatedCost: 0, rating: 4.6, timings: 'All day' },
+      { name: "Humayun's Tomb", type: 'Heritage', estimatedCost: 35, rating: 4.5, timings: '6 AM - 6 PM' },
+      { name: 'Lotus Temple', type: 'Temple', estimatedCost: 0, rating: 4.5, timings: '9 AM - 5:30 PM' },
+      { name: 'Chandni Chowk', type: 'Market', estimatedCost: 0, rating: 4.3, timings: '9 AM - 9 PM' },
     ],
     kolkata: [
       { name: 'Victoria Memorial', type: 'Monument', estimatedCost: 30, rating: 4.6, timings: '10 AM - 5 PM' },
       { name: 'Howrah Bridge', type: 'Bridge', estimatedCost: 0, rating: 4.5, timings: 'All day' },
       { name: 'Indian Museum', type: 'Museum', estimatedCost: 20, rating: 4.3, timings: '10 AM - 5 PM' },
       { name: 'Dakshineswar Kali Temple', type: 'Temple', estimatedCost: 0, rating: 4.7, timings: '6 AM - 12:30 PM, 3 PM - 9 PM' },
+      { name: 'College Street', type: 'Market', estimatedCost: 0, rating: 4.2, timings: '10 AM - 8 PM' },
     ],
-    hyderabad: [
-      { name: 'Charminar', type: 'Monument', estimatedCost: 25, rating: 4.4, timings: '9:30 AM - 5:30 PM' },
-      { name: 'Golconda Fort', type: 'Fort', estimatedCost: 15, rating: 4.5, timings: '8 AM - 5:30 PM' },
-      { name: 'Ramoji Film City', type: 'Theme Park', estimatedCost: 1150, rating: 4.4, timings: '9 AM - 5:30 PM' },
-      { name: 'Hussain Sagar Lake', type: 'Lake', estimatedCost: 0, rating: 4.3, timings: 'All day' },
+    bangalore: [
+      { name: 'Lalbagh Botanical Garden', type: 'Garden', estimatedCost: 20, rating: 4.4, timings: '6 AM - 7 PM' },
+      { name: 'Cubbon Park', type: 'Park', estimatedCost: 0, rating: 4.4, timings: '6 AM - 6 PM' },
+      { name: 'Bangalore Palace', type: 'Palace', estimatedCost: 230, rating: 4.2, timings: '10 AM - 5:30 PM' },
+      { name: 'ISKCON Temple', type: 'Temple', estimatedCost: 0, rating: 4.6, timings: '7:15 AM - 8:30 PM' },
+      { name: 'Vidhana Soudha', type: 'Monument', estimatedCost: 0, rating: 4.4, timings: 'All day' },
+    ],
+    bengaluru: [
+      { name: 'Lalbagh Botanical Garden', type: 'Garden', estimatedCost: 20, rating: 4.4, timings: '6 AM - 7 PM' },
+      { name: 'Cubbon Park', type: 'Park', estimatedCost: 0, rating: 4.4, timings: '6 AM - 6 PM' },
+      { name: 'Bangalore Palace', type: 'Palace', estimatedCost: 230, rating: 4.2, timings: '10 AM - 5:30 PM' },
+      { name: 'ISKCON Temple', type: 'Temple', estimatedCost: 0, rating: 4.6, timings: '7:15 AM - 8:30 PM' },
+      { name: 'Vidhana Soudha', type: 'Monument', estimatedCost: 0, rating: 4.4, timings: 'All day' },
     ],
     chennai: [
       { name: 'Marina Beach', type: 'Beach', estimatedCost: 0, rating: 4.3, timings: 'All day' },
       { name: 'Kapaleeshwarar Temple', type: 'Temple', estimatedCost: 0, rating: 4.6, timings: '5 AM - 12 PM, 4 PM - 9 PM' },
       { name: 'Fort St. George', type: 'Fort', estimatedCost: 5, rating: 4.2, timings: '9 AM - 5 PM' },
       { name: 'Government Museum', type: 'Museum', estimatedCost: 15, rating: 4.2, timings: '9:30 AM - 5 PM' },
+      { name: 'Mahabalipuram Shore Temple', type: 'Heritage', estimatedCost: 40, rating: 4.6, timings: '6 AM - 6 PM' },
+    ],
+    hyderabad: [
+      { name: 'Charminar', type: 'Monument', estimatedCost: 25, rating: 4.4, timings: '9:30 AM - 5:30 PM' },
+      { name: 'Golconda Fort', type: 'Fort', estimatedCost: 15, rating: 4.5, timings: '8 AM - 5:30 PM' },
+      { name: 'Hussain Sagar Lake', type: 'Lake', estimatedCost: 0, rating: 4.3, timings: 'All day' },
+      { name: 'Salar Jung Museum', type: 'Museum', estimatedCost: 20, rating: 4.3, timings: '10 AM - 5 PM' },
+      { name: 'Ramoji Film City', type: 'Theme Park', estimatedCost: 1150, rating: 4.4, timings: '9 AM - 5:30 PM' },
+    ],
+    // ── Rajasthan ─────────────────────────────────────────────────────────────
+    jaipur: [
+      { name: 'Amber Fort', type: 'Fort', estimatedCost: 100, rating: 4.6, timings: '8 AM - 5:30 PM' },
+      { name: 'Hawa Mahal', type: 'Palace', estimatedCost: 50, rating: 4.5, timings: '9 AM - 4:30 PM' },
+      { name: 'City Palace', type: 'Palace', estimatedCost: 200, rating: 4.5, timings: '9:30 AM - 5 PM' },
+      { name: 'Jantar Mantar', type: 'Observatory', estimatedCost: 50, rating: 4.3, timings: '9 AM - 4:30 PM' },
+      { name: 'Nahargarh Fort', type: 'Fort', estimatedCost: 50, rating: 4.4, timings: '10 AM - 5:30 PM' },
+    ],
+    udaipur: [
+      { name: 'City Palace', type: 'Palace', estimatedCost: 300, rating: 4.6, timings: '9:30 AM - 5:30 PM' },
+      { name: 'Lake Pichola Boat Ride', type: 'Lake', estimatedCost: 400, rating: 4.7, timings: '8 AM - 6 PM' },
+      { name: 'Saheliyon ki Bari', type: 'Garden', estimatedCost: 10, rating: 4.3, timings: '9 AM - 7 PM' },
+      { name: 'Jagdish Temple', type: 'Temple', estimatedCost: 0, rating: 4.5, timings: '4 AM - 2 PM, 5 PM - 10 PM' },
+      { name: 'Fateh Sagar Lake', type: 'Lake', estimatedCost: 0, rating: 4.4, timings: 'All day' },
+    ],
+    jodhpur: [
+      { name: 'Mehrangarh Fort', type: 'Fort', estimatedCost: 100, rating: 4.7, timings: '9 AM - 5 PM' },
+      { name: 'Umaid Bhawan Palace Museum', type: 'Palace', estimatedCost: 30, rating: 4.5, timings: '9 AM - 5 PM' },
+      { name: 'Jaswant Thada', type: 'Heritage', estimatedCost: 30, rating: 4.4, timings: '9 AM - 5 PM' },
+      { name: 'Clock Tower & Sardar Market', type: 'Market', estimatedCost: 0, rating: 4.3, timings: '8 AM - 9 PM' },
+    ],
+    jaisalmer: [
+      { name: 'Jaisalmer Fort', type: 'Fort', estimatedCost: 70, rating: 4.6, timings: '9 AM - 6 PM' },
+      { name: 'Sam Sand Dunes', type: 'Dunes', estimatedCost: 500, rating: 4.6, timings: 'Sunrise - Sunset' },
+      { name: 'Patwon ki Haveli', type: 'Heritage', estimatedCost: 50, rating: 4.3, timings: '9 AM - 5 PM' },
+      { name: 'Gadisar Lake', type: 'Lake', estimatedCost: 0, rating: 4.4, timings: '8 AM - 6 PM' },
+    ],
+    ajmer: [
+      { name: 'Dargah Khwaja Saheb', type: 'Religious', estimatedCost: 0, rating: 4.5, timings: '5 AM - 10 PM' },
+      { name: 'Ana Sagar Lake', type: 'Lake', estimatedCost: 0, rating: 4.2, timings: 'All day' },
+      { name: 'Taragarh Fort', type: 'Fort', estimatedCost: 0, rating: 4.0, timings: 'All day' },
+    ],
+    pushkar: [
+      { name: 'Brahma Temple', type: 'Temple', estimatedCost: 0, rating: 4.5, timings: '6:30 AM - 1:30 PM, 3 PM - 9 PM' },
+      { name: 'Pushkar Lake', type: 'Lake', estimatedCost: 0, rating: 4.4, timings: 'All day' },
+      { name: 'Savitri Mata Temple', type: 'Temple', estimatedCost: 0, rating: 4.3, timings: '6 AM - 8 PM' },
+    ],
+    // ── Uttar Pradesh ─────────────────────────────────────────────────────────
+    agra: [
+      { name: 'Taj Mahal', type: 'Monument', estimatedCost: 50, rating: 4.8, timings: 'Sunrise - Sunset (Fri closed)' },
+      { name: 'Agra Fort', type: 'Fort', estimatedCost: 40, rating: 4.5, timings: '6 AM - 6 PM' },
+      { name: 'Fatehpur Sikri', type: 'Heritage', estimatedCost: 40, rating: 4.5, timings: '6 AM - 6 PM' },
+      { name: 'Mehtab Bagh', type: 'Garden', estimatedCost: 25, rating: 4.4, timings: '6 AM - 6 PM' },
+    ],
+    varanasi: [
+      { name: 'Dashashwamedh Ghat Aarti', type: 'Religious', estimatedCost: 0, rating: 4.8, timings: 'Daily evening' },
+      { name: 'Kashi Vishwanath Temple', type: 'Temple', estimatedCost: 0, rating: 4.7, timings: '3 AM - 11 PM' },
+      { name: 'Sarnath', type: 'Heritage', estimatedCost: 10, rating: 4.5, timings: '5 AM - 6 PM' },
+      { name: 'Boat Ride on Ganges', type: 'Experience', estimatedCost: 150, rating: 4.6, timings: 'Early morning / Sunset' },
+      { name: 'Manikarnika Ghat', type: 'Religious', estimatedCost: 0, rating: 4.3, timings: 'All day' },
+    ],
+    lucknow: [
+      { name: 'Bara Imambara', type: 'Heritage', estimatedCost: 25, rating: 4.5, timings: '6 AM - 5 PM' },
+      { name: 'Chota Imambara', type: 'Heritage', estimatedCost: 25, rating: 4.4, timings: '6 AM - 5 PM' },
+      { name: 'British Residency', type: 'Heritage', estimatedCost: 15, rating: 4.3, timings: '10 AM - 5 PM' },
+      { name: 'Hazratganj Market', type: 'Market', estimatedCost: 0, rating: 4.2, timings: '10 AM - 9 PM' },
+    ],
+    mathura: [
+      { name: 'Krishna Janmabhoomi Temple', type: 'Temple', estimatedCost: 0, rating: 4.6, timings: '5 AM - 12 PM, 4 PM - 9:30 PM' },
+      { name: 'Dwarkadhish Temple', type: 'Temple', estimatedCost: 0, rating: 4.5, timings: '6:30 AM - 1 PM, 5 PM - 9:30 PM' },
+      { name: 'Vrindavan', type: 'Religious', estimatedCost: 0, rating: 4.6, timings: 'All day' },
+    ],
+    // ── Himachal Pradesh & Uttarakhand ────────────────────────────────────────
+    shimla: [
+      { name: 'The Ridge', type: 'Viewpoint', estimatedCost: 0, rating: 4.5, timings: 'All day' },
+      { name: 'Mall Road', type: 'Market', estimatedCost: 0, rating: 4.3, timings: 'All day' },
+      { name: 'Jakhu Temple', type: 'Temple', estimatedCost: 0, rating: 4.4, timings: '5 AM - 9 PM' },
+      { name: 'Kufri', type: 'Hills', estimatedCost: 200, rating: 4.3, timings: '8 AM - 6 PM' },
+      { name: 'Christ Church', type: 'Church', estimatedCost: 0, rating: 4.4, timings: '8 AM - 6 PM' },
+    ],
+    manali: [
+      { name: 'Solang Valley', type: 'Valley', estimatedCost: 250, rating: 4.6, timings: '9 AM - 5 PM' },
+      { name: 'Rohtang Pass', type: 'Mountain Pass', estimatedCost: 550, rating: 4.5, timings: 'Summer only' },
+      { name: 'Hadimba Devi Temple', type: 'Temple', estimatedCost: 0, rating: 4.5, timings: '8 AM - 6 PM' },
+      { name: 'Manu Temple', type: 'Temple', estimatedCost: 0, rating: 4.3, timings: '7 AM - 8 PM' },
+      { name: 'Old Manali', type: 'Village', estimatedCost: 0, rating: 4.4, timings: 'All day' },
+    ],
+    rishikesh: [
+      { name: 'Ram Jhula & Laxman Jhula', type: 'Bridge', estimatedCost: 0, rating: 4.5, timings: 'All day' },
+      { name: 'Triveni Ghat Aarti', type: 'Religious', estimatedCost: 0, rating: 4.6, timings: 'Daily evening' },
+      { name: 'Rafting on Ganges', type: 'Adventure', estimatedCost: 600, rating: 4.7, timings: '8 AM - 5 PM' },
+      { name: 'Neelkanth Mahadev Temple', type: 'Temple', estimatedCost: 0, rating: 4.5, timings: '6 AM - 7 PM' },
+      { name: 'Beatles Ashram', type: 'Heritage', estimatedCost: 150, rating: 4.3, timings: '8 AM - 5 PM' },
+    ],
+    haridwar: [
+      { name: 'Har Ki Pauri Ghat', type: 'Religious', estimatedCost: 0, rating: 4.7, timings: 'All day' },
+      { name: 'Mansa Devi Temple', type: 'Temple', estimatedCost: 0, rating: 4.5, timings: '5 AM - 9 PM' },
+      { name: 'Chandi Devi Temple', type: 'Temple', estimatedCost: 75, rating: 4.4, timings: '6 AM - 8 PM' },
+    ],
+    dehradun: [
+      { name: 'Robbers Cave (Gucchupani)', type: 'Cave', estimatedCost: 25, rating: 4.3, timings: '8 AM - 6 PM' },
+      { name: 'Sahastradhara', type: 'Waterfall', estimatedCost: 30, rating: 4.1, timings: '8 AM - 6 PM' },
+      { name: 'Mindrolling Monastery', type: 'Monastery', estimatedCost: 0, rating: 4.4, timings: '9 AM - 7 PM' },
+      { name: 'Tapkeshwar Temple', type: 'Temple', estimatedCost: 0, rating: 4.3, timings: '6 AM - 7 PM' },
+    ],
+    mussoorie: [
+      { name: 'Kempty Falls', type: 'Waterfall', estimatedCost: 50, rating: 4.2, timings: '8 AM - 6 PM' },
+      { name: 'Mall Road', type: 'Market', estimatedCost: 0, rating: 4.3, timings: 'All day' },
+      { name: 'Gun Hill Cable Car', type: 'Viewpoint', estimatedCost: 75, rating: 4.3, timings: '8 AM - 8 PM' },
+      { name: 'Lal Tibba', type: 'Viewpoint', estimatedCost: 0, rating: 4.4, timings: 'All day' },
+    ],
+    // ── Punjab & Haryana ──────────────────────────────────────────────────────
+    amritsar: [
+      { name: 'Golden Temple (Harmandir Sahib)', type: 'Religious', estimatedCost: 0, rating: 4.9, timings: 'Open 24 hrs' },
+      { name: 'Wagah Border Ceremony', type: 'Experience', estimatedCost: 0, rating: 4.7, timings: 'Evening' },
+      { name: 'Jallianwala Bagh', type: 'Heritage', estimatedCost: 0, rating: 4.5, timings: '6:30 AM - 7:30 PM' },
+      { name: 'Durgiana Temple', type: 'Temple', estimatedCost: 0, rating: 4.5, timings: '4:30 AM - 11 PM' },
+      { name: 'Partition Museum', type: 'Museum', estimatedCost: 200, rating: 4.6, timings: '10 AM - 6 PM' },
+    ],
+    chandigarh: [
+      { name: 'Rock Garden', type: 'Garden', estimatedCost: 30, rating: 4.5, timings: '9 AM - 7 PM' },
+      { name: 'Sukhna Lake', type: 'Lake', estimatedCost: 0, rating: 4.4, timings: '5 AM - 9 PM' },
+      { name: 'Rose Garden (Zakir Hussain)', type: 'Garden', estimatedCost: 20, rating: 4.3, timings: '6 AM - 10 PM' },
+      { name: 'Capitol Complex', type: 'Monument', estimatedCost: 0, rating: 4.2, timings: 'All day' },
+    ],
+    // ── Goa ──────────────────────────────────────────────────────────────────
+    goa: [
+      { name: 'Calangute Beach', type: 'Beach', estimatedCost: 0, rating: 4.3, timings: 'All day' },
+      { name: 'Basilica of Bom Jesus', type: 'Church', estimatedCost: 0, rating: 4.6, timings: '9 AM - 6:30 PM' },
+      { name: 'Fort Aguada', type: 'Fort', estimatedCost: 0, rating: 4.4, timings: '9:30 AM - 6 PM' },
+      { name: 'Dudhsagar Falls', type: 'Waterfall', estimatedCost: 400, rating: 4.6, timings: '6 AM - 6 PM' },
+      { name: 'Anjuna Flea Market', type: 'Market', estimatedCost: 0, rating: 4.3, timings: 'Wed 8 AM - Sunset' },
+    ],
+    panaji: [
+      { name: 'Basilica of Bom Jesus', type: 'Church', estimatedCost: 0, rating: 4.6, timings: '9 AM - 6:30 PM' },
+      { name: 'Fontainhas Latin Quarter', type: 'Heritage', estimatedCost: 0, rating: 4.4, timings: 'All day' },
+      { name: 'Miramar Beach', type: 'Beach', estimatedCost: 0, rating: 4.2, timings: 'All day' },
+    ],
+    // ── Maharashtra ───────────────────────────────────────────────────────────
+    pune: [
+      { name: 'Shaniwar Wada', type: 'Fort', estimatedCost: 5, rating: 4.4, timings: '8 AM - 6:30 PM' },
+      { name: 'Aga Khan Palace', type: 'Heritage', estimatedCost: 5, rating: 4.4, timings: '9 AM - 5:30 PM' },
+      { name: 'Sinhagad Fort', type: 'Fort', estimatedCost: 50, rating: 4.5, timings: '5 AM - 6 PM' },
+      { name: 'Osho Ashram', type: 'Meditation', estimatedCost: 200, rating: 4.3, timings: '9 AM - 5 PM' },
+      { name: 'Pataleshwar Cave Temple', type: 'Temple', estimatedCost: 0, rating: 4.2, timings: '8:30 AM - 5:30 PM' },
+    ],
+    aurangabad: [
+      { name: 'Ajanta Caves', type: 'Heritage', estimatedCost: 40, rating: 4.7, timings: '9 AM - 5 PM (Tue closed)' },
+      { name: 'Ellora Caves', type: 'Heritage', estimatedCost: 40, rating: 4.7, timings: '6 AM - 6 PM (Tue closed)' },
+      { name: 'Bibi Ka Maqbara', type: 'Monument', estimatedCost: 25, rating: 4.3, timings: '8 AM - 8 PM' },
+    ],
+    nashik: [
+      { name: 'Trimbakeshwar Temple', type: 'Temple', estimatedCost: 0, rating: 4.6, timings: '5:30 AM - 9 PM' },
+      { name: 'Pandavleni Caves', type: 'Heritage', estimatedCost: 25, rating: 4.3, timings: '8 AM - 6 PM' },
+      { name: 'Sula Vineyards', type: 'Vineyard', estimatedCost: 200, rating: 4.5, timings: '11 AM - 11 PM' },
+    ],
+    // ── Gujarat ───────────────────────────────────────────────────────────────
+    ahmedabad: [
+      { name: 'Sabarmati Ashram', type: 'Heritage', estimatedCost: 0, rating: 4.6, timings: '8:30 AM - 6:30 PM' },
+      { name: 'Adalaj Stepwell', type: 'Heritage', estimatedCost: 0, rating: 4.5, timings: '6 AM - 6 PM' },
+      { name: 'Kankaria Lake', type: 'Lake', estimatedCost: 25, rating: 4.3, timings: '9 AM - 10 PM' },
+      { name: 'Akshardham Temple', type: 'Temple', estimatedCost: 0, rating: 4.6, timings: '9:30 AM - 7:30 PM' },
+    ],
+    surat: [
+      { name: 'Dumas Beach', type: 'Beach', estimatedCost: 0, rating: 4.1, timings: 'All day' },
+      { name: 'Surat Castle', type: 'Fort', estimatedCost: 0, rating: 4.0, timings: '8 AM - 6 PM' },
+      { name: 'Sardar Patel Museum', type: 'Museum', estimatedCost: 10, rating: 4.1, timings: '10 AM - 5 PM' },
+    ],
+    // ── South India ───────────────────────────────────────────────────────────
+    kochi: [
+      { name: 'Fort Kochi & Chinese Fishing Nets', type: 'Heritage', estimatedCost: 0, rating: 4.5, timings: 'All day' },
+      { name: 'Mattancherry Palace', type: 'Palace', estimatedCost: 5, rating: 4.3, timings: '10 AM - 5 PM (Fri closed)' },
+      { name: 'Jewish Synagogue', type: 'Religious', estimatedCost: 0, rating: 4.4, timings: '10 AM - 1 PM, 3 PM - 5 PM' },
+      { name: 'Backwater Houseboat', type: 'Boat Ride', estimatedCost: 700, rating: 4.7, timings: '8 AM - 6 PM' },
+      { name: 'Kerala Folklore Museum', type: 'Museum', estimatedCost: 100, rating: 4.4, timings: '9:30 AM - 6 PM' },
+    ],
+    cochin: [
+      { name: 'Fort Kochi & Chinese Fishing Nets', type: 'Heritage', estimatedCost: 0, rating: 4.5, timings: 'All day' },
+      { name: 'Mattancherry Palace', type: 'Palace', estimatedCost: 5, rating: 4.3, timings: '10 AM - 5 PM (Fri closed)' },
+      { name: 'Backwater Houseboat', type: 'Boat Ride', estimatedCost: 700, rating: 4.7, timings: '8 AM - 6 PM' },
+      { name: 'Kerala Folklore Museum', type: 'Museum', estimatedCost: 100, rating: 4.4, timings: '9:30 AM - 6 PM' },
+    ],
+    mysore: [
+      { name: 'Mysore Palace', type: 'Palace', estimatedCost: 70, rating: 4.7, timings: '10 AM - 5:30 PM' },
+      { name: 'Chamundeshwari Temple', type: 'Temple', estimatedCost: 0, rating: 4.6, timings: '6 AM - 2 PM, 3:30 PM - 9 PM' },
+      { name: 'Brindavan Gardens', type: 'Garden', estimatedCost: 15, rating: 4.4, timings: '6 PM - 8:30 PM (Musical Fountain)' },
+      { name: 'St. Philomena\'s Church', type: 'Church', estimatedCost: 0, rating: 4.5, timings: '5 AM - 9 PM' },
+    ],
+    mysuru: [
+      { name: 'Mysore Palace', type: 'Palace', estimatedCost: 70, rating: 4.7, timings: '10 AM - 5:30 PM' },
+      { name: 'Chamundeshwari Temple', type: 'Temple', estimatedCost: 0, rating: 4.6, timings: '6 AM - 2 PM, 3:30 PM - 9 PM' },
+      { name: 'Brindavan Gardens', type: 'Garden', estimatedCost: 15, rating: 4.4, timings: '6 PM - 8:30 PM' },
+      { name: "St. Philomena's Church", type: 'Church', estimatedCost: 0, rating: 4.5, timings: '5 AM - 9 PM' },
+    ],
+    ooty: [
+      { name: 'Nilgiri Mountain Railway', type: 'Experience', estimatedCost: 30, rating: 4.6, timings: 'Morning departures' },
+      { name: 'Ooty Lake', type: 'Lake', estimatedCost: 30, rating: 4.2, timings: '9 AM - 6 PM' },
+      { name: 'Botanical Garden', type: 'Garden', estimatedCost: 30, rating: 4.4, timings: '7 AM - 6:30 PM' },
+      { name: 'Doddabetta Peak', type: 'Viewpoint', estimatedCost: 10, rating: 4.3, timings: '7 AM - 6 PM' },
+    ],
+    munnar: [
+      { name: 'Tea Gardens & Factory Tour', type: 'Experience', estimatedCost: 100, rating: 4.5, timings: '9 AM - 5 PM' },
+      { name: 'Eravikulam National Park', type: 'Nature', estimatedCost: 110, rating: 4.6, timings: '7:30 AM - 4 PM' },
+      { name: 'Mattupetty Dam', type: 'Dam', estimatedCost: 0, rating: 4.2, timings: '9:30 AM - 5 PM' },
+      { name: 'Top Station', type: 'Viewpoint', estimatedCost: 0, rating: 4.4, timings: '7 AM - 6 PM' },
+    ],
+    'thiruvananthapuram': [
+      { name: 'Padmanabhaswamy Temple', type: 'Temple', estimatedCost: 0, rating: 4.6, timings: '3:30 AM - 7:15 PM' },
+      { name: 'Napier Museum', type: 'Museum', estimatedCost: 20, rating: 4.3, timings: '10 AM - 5 PM (Mon closed)' },
+      { name: 'Kovalam Beach', type: 'Beach', estimatedCost: 0, rating: 4.4, timings: 'All day' },
+    ],
+    trivandrum: [
+      { name: 'Padmanabhaswamy Temple', type: 'Temple', estimatedCost: 0, rating: 4.6, timings: '3:30 AM - 7:15 PM' },
+      { name: 'Napier Museum', type: 'Museum', estimatedCost: 20, rating: 4.3, timings: '10 AM - 5 PM (Mon closed)' },
+      { name: 'Kovalam Beach', type: 'Beach', estimatedCost: 0, rating: 4.4, timings: 'All day' },
+    ],
+    // ── North-East ────────────────────────────────────────────────────────────
+    darjeeling: [
+      { name: 'Tiger Hill Sunrise', type: 'Viewpoint', estimatedCost: 70, rating: 4.7, timings: '4 AM - 6 AM' },
+      { name: 'Darjeeling Himalayan Railway', type: 'Experience', estimatedCost: 40, rating: 4.6, timings: 'Morning departures' },
+      { name: 'Batasia Loop', type: 'Viewpoint', estimatedCost: 10, rating: 4.4, timings: '8 AM - 6 PM' },
+      { name: 'Peace Pagoda', type: 'Monument', estimatedCost: 0, rating: 4.5, timings: '4:30 AM - 8 PM' },
+      { name: 'Tea Garden Estates', type: 'Experience', estimatedCost: 50, rating: 4.4, timings: '8 AM - 5 PM' },
+    ],
+    gangtok: [
+      { name: 'Rumtek Monastery', type: 'Monastery', estimatedCost: 0, rating: 4.5, timings: '9 AM - 4 PM' },
+      { name: 'Tsomgo (Changu) Lake', type: 'Lake', estimatedCost: 200, rating: 4.6, timings: '9 AM - 4 PM' },
+      { name: 'Nathula Pass', type: 'Mountain Pass', estimatedCost: 200, rating: 4.6, timings: 'Permit required' },
+      { name: 'MG Marg', type: 'Market', estimatedCost: 0, rating: 4.4, timings: 'All day' },
+    ],
+    guwahati: [
+      { name: 'Kamakhya Temple', type: 'Temple', estimatedCost: 0, rating: 4.5, timings: '5:30 AM - 10 PM' },
+      { name: 'Umananda Island', type: 'Temple', estimatedCost: 30, rating: 4.3, timings: '8 AM - 5:30 PM' },
+      { name: 'Brahmaputra River Cruise', type: 'Boat Ride', estimatedCost: 200, rating: 4.4, timings: '8 AM - 5 PM' },
+    ],
+    // ── Jammu & Kashmir / Ladakh ──────────────────────────────────────────────
+    srinagar: [
+      { name: 'Dal Lake Shikara Ride', type: 'Lake', estimatedCost: 500, rating: 4.8, timings: 'All day' },
+      { name: 'Mughal Gardens (Shalimar, Nishat)', type: 'Garden', estimatedCost: 24, rating: 4.5, timings: '7 AM - 7 PM' },
+      { name: 'Shankaracharya Temple', type: 'Temple', estimatedCost: 0, rating: 4.5, timings: '7 AM - 4 PM' },
+      { name: 'Gulmarg Gondola', type: 'Adventure', estimatedCost: 840, rating: 4.7, timings: '10 AM - 4 PM' },
+    ],
+    leh: [
+      { name: 'Pangong Tso Lake', type: 'Lake', estimatedCost: 400, rating: 4.8, timings: 'Permit req. summer only' },
+      { name: 'Leh Palace', type: 'Palace', estimatedCost: 25, rating: 4.5, timings: '8 AM - 1 PM' },
+      { name: 'Thiksey Monastery', type: 'Monastery', estimatedCost: 30, rating: 4.6, timings: '7 AM - 6 PM' },
+      { name: 'Nubra Valley', type: 'Valley', estimatedCost: 400, rating: 4.7, timings: 'Permit req. summer only' },
+      { name: 'Magnetic Hill', type: 'Natural Wonder', estimatedCost: 0, rating: 4.2, timings: 'All day' },
+    ],
+    // ── Madhya Pradesh ────────────────────────────────────────────────────────
+    bhopal: [
+      { name: 'Upper Lake (Bhojtal)', type: 'Lake', estimatedCost: 0, rating: 4.3, timings: 'All day' },
+      { name: 'Sanchi Stupa', type: 'Heritage', estimatedCost: 40, rating: 4.6, timings: '8:30 AM - 5:30 PM' },
+      { name: 'Bhimbetka Rock Shelters', type: 'Heritage', estimatedCost: 25, rating: 4.5, timings: '7 AM - 6 PM' },
+      { name: 'Van Vihar National Park', type: 'Nature', estimatedCost: 30, rating: 4.3, timings: '7 AM - 6:30 PM' },
+    ],
+    indore: [
+      { name: 'Rajwada Palace', type: 'Palace', estimatedCost: 10, rating: 4.3, timings: '10 AM - 5 PM' },
+      { name: 'Lal Bagh Palace', type: 'Palace', estimatedCost: 10, rating: 4.4, timings: '10 AM - 5 PM (Mon closed)' },
+      { name: 'Sarafa Bazaar', type: 'Market', estimatedCost: 0, rating: 4.4, timings: '9 PM - 2 AM' },
+      { name: 'Patalpani Waterfall', type: 'Waterfall', estimatedCost: 0, rating: 4.3, timings: 'All day' },
+    ],
+    khajuraho: [
+      { name: 'Western Group of Temples', type: 'Heritage', estimatedCost: 40, rating: 4.7, timings: 'Sunrise - Sunset' },
+      { name: 'Eastern Group of Temples', type: 'Heritage', estimatedCost: 0, rating: 4.5, timings: 'All day' },
+      { name: 'Panna National Park', type: 'Nature', estimatedCost: 150, rating: 4.4, timings: '6 AM - 6 PM' },
+    ],
+    // ── Bihar & Jharkhand ─────────────────────────────────────────────────────
+    patna: [
+      { name: 'Mahavir Mandir', type: 'Temple', estimatedCost: 0, rating: 4.5, timings: '5 AM - 9:30 PM' },
+      { name: 'Golghar', type: 'Monument', estimatedCost: 5, rating: 4.2, timings: '9 AM - 5 PM' },
+      { name: 'Bihar Museum', type: 'Museum', estimatedCost: 100, rating: 4.4, timings: '10 AM - 5 PM (Mon closed)' },
+    ],
+    bodh_gaya: [
+      { name: 'Mahabodhi Temple', type: 'Religious', estimatedCost: 0, rating: 4.8, timings: '5 AM - 9 PM' },
+      { name: 'Bodhi Tree', type: 'Religious', estimatedCost: 0, rating: 4.7, timings: '5 AM - 9 PM' },
+      { name: 'Great Buddha Statue', type: 'Monument', estimatedCost: 0, rating: 4.5, timings: '7 AM - 6 PM' },
+    ],
+    'bodh gaya': [
+      { name: 'Mahabodhi Temple', type: 'Religious', estimatedCost: 0, rating: 4.8, timings: '5 AM - 9 PM' },
+      { name: 'Bodhi Tree', type: 'Religious', estimatedCost: 0, rating: 4.7, timings: '5 AM - 9 PM' },
+      { name: 'Great Buddha Statue', type: 'Monument', estimatedCost: 0, rating: 4.5, timings: '7 AM - 6 PM' },
+    ],
+    // ── Odisha ────────────────────────────────────────────────────────────────
+    bhubaneswar: [
+      { name: 'Lingaraja Temple', type: 'Temple', estimatedCost: 0, rating: 4.6, timings: '6 AM - 9 PM' },
+      { name: 'Mukteshwar Temple', type: 'Temple', estimatedCost: 0, rating: 4.5, timings: '6 AM - 9 PM' },
+      { name: 'Udayagiri & Khandagiri Caves', type: 'Heritage', estimatedCost: 25, rating: 4.3, timings: '7 AM - 6 PM' },
+    ],
+    puri: [
+      { name: 'Jagannath Temple', type: 'Temple', estimatedCost: 0, rating: 4.7, timings: '5 AM - 10 PM (Hindus only)' },
+      { name: 'Puri Beach', type: 'Beach', estimatedCost: 0, rating: 4.4, timings: 'All day' },
+      { name: 'Konark Sun Temple', type: 'Heritage', estimatedCost: 40, rating: 4.7, timings: '6 AM - 8 PM' },
+    ],
+    // ── Andhra Pradesh ────────────────────────────────────────────────────────
+    visakhapatnam: [
+      { name: 'RK Beach', type: 'Beach', estimatedCost: 0, rating: 4.3, timings: 'All day' },
+      { name: 'Submarine Museum (INS Kursura)', type: 'Museum', estimatedCost: 40, rating: 4.4, timings: '9 AM - 5:30 PM' },
+      { name: 'Araku Valley', type: 'Valley', estimatedCost: 200, rating: 4.5, timings: 'Day trip' },
+      { name: 'Borra Caves', type: 'Cave', estimatedCost: 65, rating: 4.4, timings: '10 AM - 5 PM' },
+    ],
+    vizag: [
+      { name: 'RK Beach', type: 'Beach', estimatedCost: 0, rating: 4.3, timings: 'All day' },
+      { name: 'Submarine Museum (INS Kursura)', type: 'Museum', estimatedCost: 40, rating: 4.4, timings: '9 AM - 5:30 PM' },
+      { name: 'Araku Valley', type: 'Valley', estimatedCost: 200, rating: 4.5, timings: 'Day trip' },
+    ],
+    // ── Pondicherry ───────────────────────────────────────────────────────────
+    pondicherry: [
+      { name: 'Auroville', type: 'Meditation', estimatedCost: 0, rating: 4.5, timings: '9 AM - 5:30 PM' },
+      { name: 'Promenade Beach', type: 'Beach', estimatedCost: 0, rating: 4.4, timings: 'All day' },
+      { name: 'Sri Aurobindo Ashram', type: 'Religious', estimatedCost: 0, rating: 4.5, timings: '8 AM - 12 PM, 2 PM - 6 PM' },
+      { name: 'French Quarter', type: 'Heritage', estimatedCost: 0, rating: 4.4, timings: 'All day' },
+    ],
+    puducherry: [
+      { name: 'Auroville', type: 'Meditation', estimatedCost: 0, rating: 4.5, timings: '9 AM - 5:30 PM' },
+      { name: 'Promenade Beach', type: 'Beach', estimatedCost: 0, rating: 4.4, timings: 'All day' },
+      { name: 'Sri Aurobindo Ashram', type: 'Religious', estimatedCost: 0, rating: 4.5, timings: '8 AM - 12 PM, 2 PM - 6 PM' },
+      { name: 'French Quarter', type: 'Heritage', estimatedCost: 0, rating: 4.4, timings: 'All day' },
     ],
   };
 
   const key = city.toLowerCase();
-  return cityAttractions[key] || [
-    { name: `${city} Heritage Walk`, type: 'Sightseeing', estimatedCost: 0, rating: 4.2, timings: 'All day' },
-    { name: `${city} Local Market`, type: 'Market', estimatedCost: 0, rating: 4.0, timings: '10 AM - 8 PM' },
-    { name: `${city} Museum`, type: 'Museum', estimatedCost: Math.min(50, Math.round(budget * 0.1)), rating: 4.1, timings: '10 AM - 5 PM' },
-  ];
+  const all = cityAttractions[key] || [];
+
+  // Budget filter: if activitiesBudget > 0, show free attractions + those
+  // affordable within budget. Sort: free first, then by cost ascending.
+  if (activitiesBudget > 0 && all.length > 0) {
+    const affordable = all.filter((a) => a.estimatedCost <= activitiesBudget);
+    // Always keep free ones; if nothing is affordable, fall back to full list
+    const filtered = affordable.length > 0 ? affordable : all;
+    return filtered.sort((a, b) => a.estimatedCost - b.estimatedCost);
+  }
+
+  return all;
 };
 
 /**

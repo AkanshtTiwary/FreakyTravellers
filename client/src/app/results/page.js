@@ -475,16 +475,31 @@ function AttractionCard({ attraction, destination }) {
         </div>
       )}
       <div className="p-3">
-        <h3 className="font-semibold text-white text-sm">{attraction.name}</h3>
-        {attraction.estimatedCost !== undefined && (
-          <p className="text-xs text-accent-green mt-1">
-            {attraction.estimatedCost === 0 ? 'Free entry' : 'Rs.' + attraction.estimatedCost}
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <h3 className="font-semibold text-white text-sm leading-tight">{attraction.name}</h3>
+          {attraction.type && (
+            <span className="shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-accent-blue/10 border border-accent-blue/20 text-accent-blue font-medium">
+              {attraction.type}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-3 mt-1.5">
+          {attraction.estimatedCost !== undefined && (
+            <p className="text-xs text-accent-green font-semibold">
+              {attraction.estimatedCost === 0 ? 'Free entry' : `Rs.${attraction.estimatedCost}`}
+            </p>
+          )}
+          {attraction.rating && (
+            <span className="inline-flex items-center gap-1 text-xs text-accent-yellow">
+              <Star className="w-3 h-3 fill-accent-yellow" />{attraction.rating}
+            </span>
+          )}
+        </div>
+        {attraction.timings && (
+          <p className="flex items-center gap-1 text-[11px] text-dark-400 mt-1.5">
+            <Clock className="w-3 h-3 shrink-0" />
+            {attraction.timings}
           </p>
-        )}
-        {attraction.rating && (
-          <span className="inline-flex items-center gap-1 text-xs text-accent-yellow mt-1">
-            <Star className="w-3 h-3 fill-accent-yellow" />{attraction.rating}
-          </span>
         )}
       </div>
     </div>
