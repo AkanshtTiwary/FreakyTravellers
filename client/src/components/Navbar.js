@@ -11,17 +11,17 @@ import { Menu, X, User, LogOut, Plane, BookOpen } from 'lucide-react';
 const NavLink = memo(({ href, active, children }) => (
   <Link
     href={href}
-    className={`relative px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
-      active 
-        ? 'text-white bg-dark-700' 
-        : 'text-dark-300 hover:text-dark-100 hover:bg-dark-800'
+    className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+      active
+        ? 'text-white bg-white/15 backdrop-blur-sm'
+        : 'text-white/80 hover:text-white hover:bg-white/10'
     }`}
   >
     {children}
     {active && (
       <motion.div
         layoutId="activeTab"
-        className="absolute inset-0 bg-dark-700 rounded-full -z-10"
+        className="absolute inset-0 bg-white/15 backdrop-blur-sm rounded-full -z-10"
         transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
       />
     )}
@@ -35,7 +35,7 @@ const MobileNavLink = memo(({ href, onClick, children }) => (
   <Link
     href={href}
     onClick={onClick}
-    className="block px-4 py-3 rounded-xl text-dark-200 hover:bg-dark-800 hover:text-white transition-colors duration-150"
+    className="block px-4 py-3 rounded-xl text-white/80 hover:bg-white/10 hover:text-white transition-colors duration-150"
   >
     {children}
   </Link>
@@ -45,9 +45,16 @@ MobileNavLink.displayName = 'MobileNavLink';
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const { isAuthenticated, user, logout } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     console.log('Navbar - Auth state:', { isAuthenticated, user });
@@ -62,7 +69,17 @@ function Navbar() {
   };
 
   return (
-    <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-xl border-b border-dark-600 z-50">
+    <nav
+      className={`fixed top-0 w-full z-50 transition-all duration-500 ${
+        scrolled
+          ? 'bg-black/85 backdrop-blur-2xl shadow-lg shadow-black/30'
+          : 'bg-transparent backdrop-blur-sm'
+      }`}
+    >
+      {/* bottom gradient border — only when scrolled */}
+      {scrolled && (
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+      )}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -70,8 +87,8 @@ function Navbar() {
             <div className="p-2 bg-gradient-accent rounded-xl group-hover:shadow-glow-blue transition-all duration-300">
               <Plane className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-white hidden sm:block">
-              SmartBudgetTrip
+            <span className="text-xl font-bold text-white hidden sm:block tracking-tight">
+              FreakyTravellers
             </span>
           </Link>
 
@@ -90,29 +107,29 @@ function Navbar() {
                 <Link
                   href="/profile"
                   className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all duration-200 ${
-                    pathname === '/profile' 
-                      ? 'bg-dark-700 ring-1 ring-accent-blue/50' 
-                      : 'bg-dark-800 hover:bg-dark-700'
+                    pathname === '/profile'
+                      ? 'bg-white/15 ring-1 ring-white/20'
+                      : 'hover:bg-white/10'
                   }`}
                 >
                   {user?.picture ? (
                     <img
                       src={user.picture}
                       alt={user.name}
-                      className="w-7 h-7 rounded-full object-cover ring-2 ring-dark-600"
+                      className="w-7 h-7 rounded-full object-cover ring-2 ring-white/20"
                     />
                   ) : (
                     <div className="w-7 h-7 rounded-full bg-gradient-accent flex items-center justify-center">
                       <User className="w-4 h-4 text-white" />
                     </div>
                   )}
-                  <span className="text-sm font-medium text-dark-200">
+                  <span className="text-sm font-medium text-white/90">
                     {user?.name}
                   </span>
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center space-x-2 px-4 py-2 bg-dark-800 text-dark-300 rounded-full hover:bg-dark-700 hover:text-accent-red transition-all duration-200"
+                  className="flex items-center space-x-2 px-4 py-2 text-white/70 rounded-full hover:bg-white/10 hover:text-red-400 transition-all duration-200"
                 >
                   <LogOut className="w-4 h-4" />
                   <span className="text-sm font-medium">Logout</span>
@@ -120,10 +137,10 @@ function Navbar() {
               </>  
             ) : (
               <>
-                <Link href="/login" className="btn-ghost">
+                <Link href="/login" className="px-4 py-2 rounded-full text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200">
                   Login
                 </Link>
-                <Link href="/signup" className="btn-primary">
+                <Link href="/signup" className="px-4 py-2 rounded-full text-sm font-bold text-white bg-accent-blue hover:bg-blue-500 transition-all duration-200 shadow-lg shadow-blue-500/25">
                   Sign Up
                 </Link>
               </>
@@ -133,10 +150,10 @@ function Navbar() {
           {/* Mobile menu button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2 rounded-xl hover:bg-dark-800 transition-colors duration-200"
+            className="md:hidden p-2 rounded-xl hover:bg-white/10 transition-colors duration-200"
             aria-label="Toggle menu"
           >
-            {isOpen ? <X className="w-6 h-6 text-dark-200" /> : <Menu className="w-6 h-6 text-dark-200" />}
+            {isOpen ? <X className="w-6 h-6 text-white" /> : <Menu className="w-6 h-6 text-white" />}
           </button>
         </div>
       </div>
@@ -149,7 +166,7 @@ function Navbar() {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="md:hidden border-t border-dark-600 bg-dark-900/95 backdrop-blur-xl"
+            className="md:hidden border-t border-white/10 bg-black/90 backdrop-blur-2xl"
           >
             <div className="px-4 py-4 space-y-2">
               <MobileNavLink href="/" onClick={() => setIsOpen(false)}>
@@ -158,13 +175,13 @@ function Navbar() {
               
               {isAuthenticated ? (
                 <>
-                  <div className="pt-4 border-t border-dark-600">
+                  <div className="pt-4 border-t border-white/10">
                     <div className="flex items-center space-x-3 mb-4 px-4">
                       {user?.picture ? (
                         <img
                           src={user.picture}
                           alt={user.name}
-                          className="w-12 h-12 rounded-full object-cover ring-2 ring-dark-600"
+                          className="w-12 h-12 rounded-full object-cover ring-2 ring-white/20"
                         />
                       ) : (
                         <div className="w-12 h-12 rounded-full bg-gradient-accent flex items-center justify-center">
@@ -179,14 +196,14 @@ function Navbar() {
                     <Link
                       href="/profile"
                       onClick={() => setIsOpen(false)}
-                      className="block w-full mb-2 px-4 py-3 bg-dark-800 text-accent-blue rounded-xl text-center hover:bg-dark-700 transition-colors duration-150"
+                      className="block w-full mb-2 px-4 py-3 bg-white/10 text-accent-blue rounded-xl text-center hover:bg-white/15 transition-colors duration-150"
                     >
                       View Profile
                     </Link>
                     <Link
                       href="/my-bookings"
                       onClick={() => setIsOpen(false)}
-                      className="block w-full mb-2 px-4 py-3 bg-dark-800 text-accent-green rounded-xl text-center hover:bg-dark-700 transition-colors duration-150 flex items-center justify-center gap-2"
+                      className="flex items-center justify-center gap-2 w-full mb-2 px-4 py-3 bg-white/10 text-accent-green rounded-xl text-center hover:bg-white/15 transition-colors duration-150"
                     >
                       My Bookings
                     </Link>
@@ -195,25 +212,25 @@ function Navbar() {
                         handleLogout();
                         setIsOpen(false);
                       }}
-                      className="w-full px-4 py-3 bg-dark-800 text-accent-red rounded-xl hover:bg-dark-700 transition-colors duration-150"
+                      className="w-full px-4 py-3 bg-white/10 text-red-400 rounded-xl hover:bg-white/15 transition-colors duration-150"
                     >
                       Logout
                     </button>
                   </div>
                 </>
               ) : (
-                <div className="space-y-2 pt-4 border-t border-dark-600">
+                <div className="space-y-2 pt-4 border-t border-white/10">
                   <Link
                     href="/login"
                     onClick={() => setIsOpen(false)}
-                    className="block w-full px-4 py-3 bg-dark-800 text-dark-200 rounded-xl text-center hover:bg-dark-700 transition-colors duration-150"
+                    className="block w-full px-4 py-3 bg-white/10 text-white rounded-xl text-center hover:bg-white/15 transition-colors duration-150"
                   >
                     Login
                   </Link>
                   <Link
                     href="/signup"
                     onClick={() => setIsOpen(false)}
-                    className="block w-full px-4 py-3 bg-accent-blue text-white rounded-xl text-center hover:bg-accent-blue-dark transition-colors duration-150"
+                    className="block w-full px-4 py-3 bg-accent-blue text-white rounded-xl text-center hover:bg-blue-500 transition-colors duration-150"
                   >
                     Sign Up
                   </Link>
