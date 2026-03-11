@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import SearchForm from '@/components/SearchForm';
 import { motion } from 'framer-motion';
 import { Plane, DollarSign, MapPin, TrendingUp, Sparkles, Clock, Shield } from 'lucide-react';
 import DestinationCarousel from '@/components/DestinationCarousel';
@@ -32,64 +31,7 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-dark">
       <Navbar />
       
-      {/* Hero Section */}
-      <section className="relative pt-24 pb-20 px-4 overflow-hidden">
-        {/* Animated background elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-accent-blue/5 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent-purple/5 rounded-full blur-3xl"></div>
-        </div>
-
-        <div className="max-w-7xl mx-auto relative z-10">
-          <motion.div
-            initial="initial"
-            animate="animate"
-            variants={staggerContainer}
-            className="text-center mb-16"
-          >
-            <motion.div
-              variants={fadeInUp}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-dark-800 border border-dark-600 rounded-full mb-6"
-            >
-              <Sparkles className="w-4 h-4 text-accent-blue" />
-              <span className="text-sm text-dark-300">AI-Powered Travel Optimization</span>
-            </motion.div>
-
-            <motion.h1
-              variants={fadeInUp}
-              className="text-5xl md:text-7xl font-bold mb-6"
-            >
-              <span className="text-gradient">FreakyTravellers</span>
-            </motion.h1>
-
-            <motion.p
-              variants={fadeInUp}
-              className="text-xl md:text-2xl text-dark-300 mb-4 max-w-3xl mx-auto"
-            >
-              Plan Your Perfect Trip Within Budget
-            </motion.p>
-            
-            <motion.p
-              variants={fadeInUp}
-              className="text-lg text-dark-400 max-w-2xl mx-auto"
-            >
-              Enter your source, destination, and budget. We'll find the cheapest transport, 
-              best hotels, and recommend restaurants - all optimized for your budget!
-            </motion.p>
-          </motion.div>
-
-          {/* Search Form */}
-          <motion.div
-            initial={{ opacity:0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
-            <SearchForm />
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Destination Carousel */}
+      {/* Hero + Destination Carousel combined */}
       <DestinationCarousel />
 
       {/* Features Section */}
