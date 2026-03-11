@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import SearchForm from '@/components/SearchForm';
 import { motion } from 'framer-motion';
 import { Plane, DollarSign, MapPin, TrendingUp, Sparkles, Clock, Shield } from 'lucide-react';
+import DestinationCarousel from '@/components/DestinationCarousel';
 
 // Animation variants for performance
 const fadeInUp = {
@@ -87,6 +88,9 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
+
+      {/* Destination Carousel */}
+      <DestinationCarousel />
 
       {/* Features Section */}
       <section className="py-20 px-4 relative">
