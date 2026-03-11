@@ -14,11 +14,11 @@ const destinations = [
     color: '#f97316',
   },
   {
-    name: 'Goa Beaches',
-    location: 'Goa, India',
-    image: 'https://images.unsplash.com/photo-1614082242765-7c98ca0f3df3?w=1600&q=90',
-    tag: 'Beach',
-    color: '#06b6d4',
+    name: 'Santorini',
+    location: 'Greece',
+    image: 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=1600&q=90',
+    tag: 'International',
+    color: '#38bdf8',
   },
   {
     name: 'Kerala Backwaters',
@@ -28,11 +28,25 @@ const destinations = [
     color: '#22c55e',
   },
   {
+    name: 'Bali Temples',
+    location: 'Indonesia',
+    image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=1600&q=90',
+    tag: 'Culture',
+    color: '#4ade80',
+  },
+  {
     name: 'Jaipur Palace',
     location: 'Jaipur, India',
     image: 'https://images.unsplash.com/photo-1599661046289-e31897846e41?w=1600&q=90',
     tag: 'Royalty',
     color: '#e879f9',
+  },
+  {
+    name: 'Machu Picchu',
+    location: 'Peru',
+    image: 'https://images.unsplash.com/photo-1526392060635-9d6019884377?w=1600&q=90',
+    tag: 'Ancient',
+    color: '#84cc16',
   },
   {
     name: 'Manali Peaks',
@@ -42,6 +56,13 @@ const destinations = [
     color: '#818cf8',
   },
   {
+    name: 'Amalfi Coast',
+    location: 'Italy',
+    image: 'https://images.unsplash.com/photo-1533587851505-d119e13fa0d7?w=1600&q=90',
+    tag: 'Scenic',
+    color: '#f59e0b',
+  },
+  {
     name: 'Varanasi Ghats',
     location: 'Uttar Pradesh, India',
     image: 'https://images.unsplash.com/photo-1561361058-c24cecae35ca?w=1600&q=90',
@@ -49,22 +70,120 @@ const destinations = [
     color: '#fb923c',
   },
   {
-    name: 'Santorini',
-    location: 'Greece',
-    image: 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=1600&q=90',
-    tag: 'International',
-    color: '#38bdf8',
+    name: 'Kyoto Temples',
+    location: 'Japan',
+    image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=1600&q=90',
+    tag: 'Culture',
+    color: '#f43f5e',
   },
   {
-    name: 'Bali Temples',
-    location: 'Indonesia',
-    image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=1600&q=90',
-    tag: 'Culture',
-    color: '#4ade80',
+    name: 'Goa Beaches',
+    location: 'Goa, India',
+    image: 'https://images.unsplash.com/photo-1614082242765-7c98ca0f3df3?w=1600&q=90',
+    tag: 'Beach',
+    color: '#06b6d4',
+  },
+  {
+    name: 'Northern Lights',
+    location: 'Iceland',
+    image: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=1600&q=90',
+    tag: 'Wonder',
+    color: '#a78bfa',
+  },
+  {
+    name: 'Leh Ladakh',
+    location: 'Jammu & Kashmir, India',
+    image: 'https://images.unsplash.com/photo-1589308078059-be1415eab4c3?w=1600&q=90',
+    tag: 'Mountain',
+    color: '#60a5fa',
+  },
+  {
+    name: 'Petra',
+    location: 'Jordan',
+    image: 'https://images.unsplash.com/photo-1579606032821-4e6161c81bd3?w=1600&q=90',
+    tag: 'Ancient',
+    color: '#fbbf24',
+  },
+  {
+    name: 'Maldives',
+    location: 'South Asia',
+    image: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=1600&q=90',
+    tag: 'Paradise',
+    color: '#22d3ee',
+  },
+  {
+    name: 'Coorg Hills',
+    location: 'Karnataka, India',
+    image: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=1600&q=90',
+    tag: 'Nature',
+    color: '#34d399',
+  },
+  {
+    name: 'Colosseum',
+    location: 'Rome, Italy',
+    image: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=1600&q=90',
+    tag: 'Heritage',
+    color: '#f97316',
+  },
+  {
+    name: 'Darjeeling',
+    location: 'West Bengal, India',
+    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=90',
+    tag: 'Hills',
+    color: '#86efac',
+  },
+  {
+    name: 'Dubai Skyline',
+    location: 'UAE',
+    image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1600&q=90',
+    tag: 'Urban',
+    color: '#fde68a',
+  },
+  {
+    name: 'Rann of Kutch',
+    location: 'Gujarat, India',
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&q=90',
+    tag: 'Desert',
+    color: '#fca5a5',
+  },
+  {
+    name: 'Banff National Park',
+    location: 'Canada',
+    image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1600&q=90',
+    tag: 'Wilderness',
+    color: '#6ee7b7',
+  },
+  {
+    name: 'Hampi Ruins',
+    location: 'Karnataka, India',
+    image: 'https://images.unsplash.com/photo-1590766940554-b8e86f0ead37?w=1600&q=90',
+    tag: 'Heritage',
+    color: '#fcd34d',
+  },
+  {
+    name: 'Patagonia',
+    location: 'Argentina & Chile',
+    image: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=1600&q=90',
+    tag: 'Wild',
+    color: '#93c5fd',
+  },
+  {
+    name: 'Spiti Valley',
+    location: 'Himachal Pradesh, India',
+    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=90',
+    tag: 'Remote',
+    color: '#c4b5fd',
+  },
+  {
+    name: 'Great Barrier Reef',
+    location: 'Australia',
+    image: 'https://images.unsplash.com/photo-1559825481-12a05cc00344?w=1600&q=90',
+    tag: 'Marine',
+    color: '#2dd4bf',
   },
 ];
 
-const INTERVAL = 4500;
+const INTERVAL = 5000;
 
 export default function DestinationCarousel() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -85,6 +204,13 @@ export default function DestinationCarousel() {
   }, [isPaused, next]);
 
   const current = destinations[activeIndex];
+
+  // Show 7 thumbnails centered around activeIndex
+  const THUMB_WINDOW = 7;
+  const half = Math.floor(THUMB_WINDOW / 2);
+  const thumbIndices = Array.from({ length: THUMB_WINDOW }, (_, i) => {
+    return (activeIndex - half + i + destinations.length) % destinations.length;
+  });
 
   return (
     <section
@@ -221,31 +347,36 @@ export default function DestinationCarousel() {
               <ChevronLeft className="w-4 h-4" />
             </button>
 
-            {/* Thumbnails */}
+            {/* Thumbnails — sliding window of 7 */}
             <div className="flex gap-2">
-              {destinations.map((dest, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveIndex(i)}
-                  className="relative overflow-hidden transition-all duration-300 flex-shrink-0"
-                  style={{
-                    width: i === activeIndex ? '56px' : '40px',
-                    height: '40px',
-                    borderRadius: '8px',
-                    border: i === activeIndex ? `2px solid ${dest.color}` : '2px solid transparent',
-                    boxShadow: i === activeIndex ? `0 0 12px ${dest.color}88` : 'none',
-                  }}
-                >
-                  <img
-                    src={dest.image.replace('w=1600', 'w=120')}
-                    alt={dest.name}
-                    className="w-full h-full object-cover"
-                  />
-                  {i !== activeIndex && (
-                    <div className="absolute inset-0 bg-black/50" />
-                  )}
-                </button>
-              ))}
+              {thumbIndices.map((destIdx, i) => {
+                const dest = destinations[destIdx];
+                const isActive = destIdx === activeIndex;
+                return (
+                  <button
+                    key={destIdx}
+                    onClick={() => setActiveIndex(destIdx)}
+                    className="relative overflow-hidden transition-all duration-300 flex-shrink-0"
+                    style={{
+                      width: isActive ? '56px' : '40px',
+                      height: '40px',
+                      borderRadius: '8px',
+                      border: isActive ? `2px solid ${dest.color}` : '2px solid transparent',
+                      boxShadow: isActive ? `0 0 12px ${dest.color}88` : 'none',
+                      opacity: Math.abs(i - Math.floor(THUMB_WINDOW / 2)) === 3 ? 0.4 : 1,
+                    }}
+                  >
+                    <img
+                      src={dest.image.replace('w=1600', 'w=120')}
+                      alt={dest.name}
+                      className="w-full h-full object-cover"
+                    />
+                    {!isActive && (
+                      <div className="absolute inset-0 bg-black/50" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Next */}
@@ -257,19 +388,24 @@ export default function DestinationCarousel() {
             </button>
           </div>
 
-          {/* Progress bar */}
-          {!isPaused && (
-            <div className="mt-3 max-w-xs mx-auto h-0.5 bg-white/20 rounded-full overflow-hidden">
-              <motion.div
-                className="h-full rounded-full"
-                style={{ background: current.color }}
-                initial={{ width: '0%' }}
-                animate={{ width: '100%' }}
-                key={activeIndex}
-                transition={{ duration: INTERVAL / 1000, ease: 'linear' }}
-              />
-            </div>
-          )}
+          {/* Counter + progress bar */}
+          <div className="mt-3 flex flex-col items-center gap-2">
+            <span className="text-white/40 text-xs tabular-nums">
+              {activeIndex + 1} / {destinations.length}
+            </span>
+            {!isPaused && (
+              <div className="max-w-xs w-full h-0.5 bg-white/20 rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full"
+                  style={{ background: current.color }}
+                  initial={{ width: '0%' }}
+                  animate={{ width: '100%' }}
+                  key={activeIndex}
+                  transition={{ duration: INTERVAL / 1000, ease: 'linear' }}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </section>
