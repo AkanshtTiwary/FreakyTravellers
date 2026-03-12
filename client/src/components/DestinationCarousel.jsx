@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, ChevronLeft, ChevronRight, Sparkles, Search, Loader2, Users, DollarSign, Calendar, ArrowRight } from 'lucide-react';
@@ -192,8 +192,8 @@ export default function DestinationCarousel() {
   const router = useRouter();
   const { setTripResult, setLoading } = useTripStore();
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const timerRef = useRef(null);
   const [formData, setFormData] = useState({
     source: '',
     destination: '',
@@ -236,19 +236,27 @@ export default function DestinationCarousel() {
     }
   };
 
+  const startTimer = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % destinations.length);
+    }, INTERVAL);
+  }, []);
+
   const next = useCallback(() => {
     setActiveIndex((prev) => (prev + 1) % destinations.length);
-  }, []);
+    startTimer();
+  }, [startTimer]);
 
   const prev = useCallback(() => {
     setActiveIndex((prev) => (prev - 1 + destinations.length) % destinations.length);
-  }, []);
+    startTimer();
+  }, [startTimer]);
 
   useEffect(() => {
-    if (isPaused) return;
-    const timer = setInterval(next, INTERVAL);
-    return () => clearInterval(timer);
-  }, [isPaused, next]);
+    startTimer();
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [startTimer]);
 
   const current = destinations[activeIndex];
 
@@ -262,8 +270,6 @@ export default function DestinationCarousel() {
   return (
     <section
       className="relative min-h-screen flex flex-col overflow-hidden"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
     >
       {/* ── Full-screen background images ── */}
       <AnimatePresence mode="sync">
@@ -518,7 +524,7 @@ export default function DestinationCarousel() {
                 return (
                   <button
                     key={destIdx}
-                    onClick={() => setActiveIndex(destIdx)}
+                    onClick={() => { setActiveIndex(destIdx); startTimer(); }}
                     className="relative overflow-hidden transition-all duration-300 flex-shrink-0"
                     style={{
                       width: isActive ? '56px' : '40px',
@@ -556,18 +562,16 @@ export default function DestinationCarousel() {
             <span className="text-white/40 text-xs tabular-nums">
               {activeIndex + 1} / {destinations.length}
             </span>
-            {!isPaused && (
-              <div className="max-w-xs w-full h-0.5 bg-white/20 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full"
-                  style={{ background: current.color }}
-                  initial={{ width: '0%' }}
-                  animate={{ width: '100%' }}
-                  key={activeIndex}
-                  transition={{ duration: INTERVAL / 1000, ease: 'linear' }}
-                />
-              </div>
-            )}
+            <div className="max-w-xs w-full h-0.5 bg-white/20 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full rounded-full"
+                style={{ background: current.color }}
+                initial={{ width: '0%' }}
+                animate={{ width: '100%' }}
+                key={activeIndex}
+                transition={{ duration: INTERVAL / 1000, ease: 'linear' }}
+              />
+            </div>
           </div>
         </div>
       </div>
