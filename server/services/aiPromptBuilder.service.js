@@ -1,7 +1,10 @@
 /**
  * AI Prompt Builder Service
  * Constructs structured AI prompts for travel plan generation.
+ * Now injects real Indian Railways train data via indianRailService.
  */
+
+const { buildRailContext, resolveStationCode } = require('./indianRailService');
 
 const SYSTEM_PROMPT = `You are a world-class travel planner who NEVER turns away a client regardless of budget. 
 Your philosophy: every budget deserves an amazing journey. 
@@ -10,6 +13,7 @@ You respond ONLY with valid, parseable JSON matching the exact schema provided.`
 
 /**
  * Build the full user prompt for LLM travel planning.
+ * NOTE: This is now async — it fetches live train data before building the prompt.
  *
  * @param {object} params
  * @param {string} params.source
@@ -22,9 +26,9 @@ You respond ONLY with valid, parseable JSON matching the exact schema provided.`
  * @param {object} params.allocation     - Output of allocateBudget()
  * @param {object} [params.dates]        - { from, to }
  * @param {boolean} [params.minimumFare] - Request minimum fare variant
- * @returns {{ systemPrompt: string, userPrompt: string }}
+ * @returns {Promise<{ systemPrompt: string, userPrompt: string }>}
  */
-function buildTravelPlanPrompt({
+async function buildTravelPlanPrompt({
   source,
   destination,
   budget,
@@ -47,6 +51,27 @@ Prioritise free/near-free accommodation (couchsurfing, camping), slowest but che
 free sightseeing, and the cheapest local food. Clearly label this as the minimum-fare variant.`
     : '';
 
+  // ── Fetch real train data (non-blocking — falls back gracefully if API fails) ──
+  const isIndianRoute = resolveStationCode(source) && resolveStationCode(destination);
+  let railContext = null;
+  if (isIndianRoute) {
+    try {
+      railContext = await buildRailContext(source, destination);
+    } catch (e) {
+      console.warn('[buildTravelPlanPrompt] Rail context fetch failed:', e.message);
+    }
+  }
+
+  const railSection = railContext
+    ? `\n${railContext}\n`
+    : '';
+
+  const transportRule = isIndianRoute
+    ? `TRANSPORT RULE: This is an Indian route. ${railContext
+        ? 'Use the LIVE TRAIN DATA above as your primary transport options — these are real trains you MUST include.'
+        : 'Include well-known InterCity Express / Rajdhani / Shatabdi trains as appropriate.'} Also include buses and flights based on distance and budget tier.`
+    : 'TRANSPORT RULE: Include all relevant transport types for this international/non-Indian route.';
+
   const userPrompt = `Plan a complete trip from ${source} to ${destination} for ${travelers} traveler(s).
 Total budget: ${budget} ${currency}.
 ${dateClause}
@@ -59,6 +84,8 @@ Budget breakdown available (per total group):
 - Activities:     ${cats.activities.allocated} ${currency}  (${cats.activities.percentage}% — ${cats.activities.hint})
 
 Budget Tier: ${tierEmoji} ${tier}
+${railSection}
+${transportRule}
 
 STRICT RULES:
 1. NEVER say the budget is insufficient. Always provide a complete actionable plan.

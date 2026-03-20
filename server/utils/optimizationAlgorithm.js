@@ -40,6 +40,7 @@ const optimizeTripBudget = async ({
       isOptimized: false,
       optimizationScore: 0,
       transport: null,
+      alternativeTransports: [], // Added for showing other rail options
       accommodation: null,
       budgetBreakdown: null,
       recommendations: {
@@ -132,6 +133,26 @@ const optimizeTripBudget = async ({
     }
 
     optimizationResult.transport = selectedTransport;
+
+    // ========== ADD STEP 3.5: Collect Alternative Transport Options ==========
+    // Filter for train alternatives if selected transport is a train
+    let alternativeTransports = [];
+    if (selectedTransport.mode === 'train' || selectedTransport.apiSource === 'indian_railway') {
+      // Get other train options (excluding the selected one)
+      alternativeTransports = transportOptions
+        .filter(
+          (t) =>
+            t.mode === 'train' &&
+            t.apiSource === 'indian_railway' &&
+            t.trainNumber !== selectedTransport.trainNumber
+        )
+        .slice(0, 4); // Show top 4 alternatives
+      
+      if (alternativeTransports.length > 0) {
+        console.log(`📚 Found ${alternativeTransports.length} alternative train options`);
+        optimizationResult.alternativeTransports = alternativeTransports;
+      }
+    }
 
     if (budgetMode === 'tight') {
       optimizationResult.optimizationNotes.push({
@@ -1072,58 +1093,81 @@ const getAttractionSuggestions = (city, activitiesBudget) => {
  * Includes: unreserved train, state bus, shared auto, cycle rickshaw, walking.
  * All fares are ESTIMATED — TODO: replace with real per-route fare lookup when available.
  */
-const getUltraBudgetTransportOptions = (source, destination) => [
-  {
-    mode: 'bus',
-    provider: 'State Roadways Bus (General / Ordinary)',
-    class: 'general',
-    totalCost: 120,
-    duration: 'Varies by route',
-    note: 'Government bus — cheapest intercity option. No AC. Available on most routes.',
-    apiSource: 'estimated',
-    budgetType: 'ultra',
-  },
-  {
-    mode: 'train',
-    provider: 'Indian Railways — Unreserved (General Class)',
-    class: 'general',
-    totalCost: 75,
-    duration: 'Varies by route',
-    note: 'No reservation needed. Cheapest rail option at approx ₹0.8–1.5/km.',
-    apiSource: 'estimated',
-    budgetType: 'ultra',
-  },
-  {
-    mode: 'shared-auto',
-    provider: 'Local Shared Auto Rickshaw',
-    class: 'shared',
-    totalCost: 40,
-    duration: 'Short distances (under 20 km)',
-    note: 'Fixed route, shared with other passengers. Ask locals for the right route.',
-    apiSource: 'estimated',
-    budgetType: 'ultra',
-  },
-  {
-    mode: 'rickshaw',
-    provider: 'Cycle Rickshaw',
-    class: 'manual',
-    totalCost: 25,
-    duration: 'Very short distances (under 5 km)',
-    note: 'Ideal for last-mile travel. Always negotiate fare before boarding.',
-    apiSource: 'estimated',
-    budgetType: 'ultra',
-  },
-  {
-    mode: 'walk',
-    provider: 'On foot',
-    class: 'general',
-    totalCost: 0,
-    duration: 'Distances under 3 km',
-    note: 'Completely free. Use offline maps (Google Maps / Maps.me) and ask locals.',
-    apiSource: 'estimated',
-    budgetType: 'ultra',
-  },
-];
+const getUltraBudgetTransportOptions = (source, destination) => {
+  // Determine distance to validate transport mode suitability
+  const routeKey = `${(source || '').toLowerCase()}-${(destination || '').toLowerCase()}`;
+  const isShortDistance = (source && destination && 
+    (source.toLowerCase() === destination.toLowerCase() ||
+     source.includes('nearby') || destination.includes('nearby')));
+  
+  // Estimate if this is a long-distance route (no short routes)
+  const isLongDistance = routeKey.includes('delhi') || routeKey.includes('patna') || 
+                         routeKey.includes('mumbai') || routeKey.includes('bangalore') ||
+                         routeKey.includes('hyderabad') || routeKey.includes('kolkata');
+  
+  const allOptions = [
+    {
+      mode: 'bus',
+      provider: 'State Roadways Bus (General / Ordinary)',
+      class: 'general',
+      totalCost: 120,
+      duration: 'Varies by route',
+      note: 'Government bus — cheapest intercity option. No AC. Available on most routes.',
+      apiSource: 'estimated',
+      budgetType: 'ultra',
+    },
+    {
+      mode: 'train',
+      provider: 'Indian Railways — Unreserved (General Class)',
+      class: 'general',
+      totalCost: 75,
+      duration: 'Varies by route',
+      note: 'No reservation needed. Cheapest rail option at approx ₹0.8–1.5/km.',
+      apiSource: 'estimated',
+      budgetType: 'ultra',
+    },
+    {
+      mode: 'shared-auto',
+      provider: 'Local Shared Auto Rickshaw',
+      class: 'shared',
+      totalCost: 40,
+      duration: 'Short distances (under 20 km)',
+      note: 'Fixed route, shared with other passengers. Ask locals for the right route.',
+      apiSource: 'estimated',
+      budgetType: 'ultra',
+    },
+  ];
+  
+  // Only add cycle rickshaw for short/local distances (NOT for long intercity routes)
+  if (!isLongDistance) {
+    allOptions.push({
+      mode: 'rickshaw',
+      provider: 'Cycle Rickshaw',
+      class: 'manual',
+      totalCost: 25,
+      duration: 'Very short distances (under 5 km)',
+      note: 'Ideal for last-mile travel. Always negotiate fare before boarding.',
+      apiSource: 'estimated',
+      budgetType: 'ultra',
+    });
+  }
+  
+  // Only add walk for very short/same-location distances
+  if (isShortDistance) {
+    allOptions.push({
+      mode: 'walk',
+      provider: 'On foot',
+      class: 'general',
+      totalCost: 0,
+      duration: 'Distances under 3 km',
+      note: 'Completely free. Use offline maps (Google Maps / Maps.me) and ask locals.',
+      apiSource: 'estimated',
+      budgetType: 'ultra',
+    });
+  }
+  
+  return allOptions;
+};
 
 /**
  * Free food sources by city.

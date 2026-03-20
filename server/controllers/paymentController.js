@@ -10,11 +10,17 @@ const Trip = require('../models/Trip');
 const { sendBookingConfirmation } = require('../config/email');
 const { asyncHandler } = require('../middleware/errorHandler');
 
-// Initialize Razorpay instance
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+// Initialize Razorpay instance - use mock if credentials not available
+let razorpay;
+try {
+  razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
+} catch (error) {
+  console.warn('⚠️  Razorpay initialization failed. Payment features will be limited.');
+  razorpay = null;
+}
 
 /**
  * @desc    Create Razorpay order for trip booking

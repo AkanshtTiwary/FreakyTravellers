@@ -14,6 +14,7 @@
  */
 
 const axios = require('axios');
+const trainService = require('./trainService');
 
 // ==================== AMADEUS API AUTHENTICATION ====================
 
@@ -361,67 +362,135 @@ const getFallbackHotels = ({ cityCode, adults }) => {
  */
 const searchTrains = async ({ source, destination, date }) => {
   try {
-    const apiKey = process.env.INDIAN_RAIL_API_KEY;
+    console.log(`🚂 Searching trains from ${source} to ${destination}...`);
 
-    if (!apiKey) {
-      console.log('⚠️ Indian Rail API key not configured, using fallback data');
-      return getFallbackTrains({ source, destination });
-    }
-
-    // Indian Railway API endpoint (using RapidAPI or similar)
-    // Note: Replace with actual Indian Railway API when available
-    const sourceCode = getStationCode(source);
-    const destCode = getStationCode(destination);
-
-    const response = await axios.get(
-      'https://indian-railway-api.p.rapidapi.com/trains/getBetweenStations',
-      {
-        params: {
-          from: sourceCode,
-          to: destCode,
-          date: date || getDefaultDepartureDate(),
-        },
-        headers: {
-          'X-RapidAPI-Key': apiKey,
-          'X-RapidAPI-Host': 'indian-railway-api.p.rapidapi.com',
-        },
-        timeout: 10000,
+    // ========== PRIORITY 1: Use actual trainService (erail.in) ==========
+    try {
+      let trainData;
+      
+      if (date) {
+        trainData = await trainService.getTrainsOnDate(source, destination, date);
+      } else {
+        trainData = await trainService.getTrainsBetweenStations(source, destination);
       }
-    );
 
-    if (response.data && response.data.data && response.data.data.length > 0) {
-      console.log(`✅ Found ${response.data.data.length} train options`);
-
-      return response.data.data.map((train) => ({
-        source: source,
-        destination: destination,
-        mode: 'train',
-        provider: 'Indian Railways',
-        trainNumber: train.train_no,
-        trainName: train.train_name,
-        class: train.class || 'SL',
-        departure: {
-          time: train.from_time,
-          station: source,
-          stationCode: sourceCode,
-        },
-        arrival: {
-          time: train.to_time,
-          station: destination,
-          stationCode: destCode,
-        },
-        duration: train.duration,
-        price: train.price || 500,
-        totalCost: train.price || 500,
-        availableClasses: ['3A', 'SL', '2A', '1A'],
-        amenities: ['Charging Point', 'Pantry Car'],
-        apiSource: 'indian_railway',
-      }));
+      if (trainData.success && trainData.data && trainData.data.length > 0) {
+        console.log(`✅ Found ${trainData.data.length} trains via trainService (erail.in)`);
+        
+        // Use distance calculation (includes custom distances for major routes)
+        let distanceKm = calculateDistance(source, destination);
+        
+        console.log(`📏 Estimated distance: ${distanceKm}km`);
+        const baseTrainPrice = Math.round(distanceKm * 0.8); // ₹0.80 per km for sleeper class
+        console.log(`💰 Base train price (sleeper): ₹${baseTrainPrice}`);
+        
+        // Transform trainService data to match external API format
+        return trainData.data.slice(0, 10).map((train) => {
+          const trainType = train.train_base?.train_name || train.train_name || '';
+          const trainClass = train.train_base?.type || 'SL';
+          
+          // Adjust price based on train type (express, rajdhani, etc.)
+          let priceMultiplier = 1.0;
+          if (trainType.includes('RAJDHANI')) priceMultiplier = 2.0;
+          else if (trainType.includes('SHATABDI')) priceMultiplier = 1.5;
+          else if (trainType.includes('EXPRESS')) priceMultiplier = 1.1;
+          else if (trainType.includes('LOCAL') || trainType.includes('PASSENGER')) priceMultiplier = 0.7;
+          
+          const trainPrice = Math.round(baseTrainPrice * priceMultiplier);
+          
+          console.log(`🚂 ${trainType.substring(0, 30)} -> ₹${trainPrice} (multiplier: ${priceMultiplier}x)`);
+          
+          return {
+            source: source,
+            destination: destination,
+            mode: 'train',
+            provider: 'Indian Railways',
+            trainNumber: train.train_base?.train_no || train.train_no,
+            trainName: train.train_base?.train_name || train.train_name,
+            class: trainClass,
+            departure: {
+              time: train.train_base?.from_time || train.from_time,
+              station: source,
+            },
+            arrival: {
+              time: train.train_base?.to_time || train.to_time,
+              station: destination,
+            },
+            duration: train.train_base?.travel_time || train.duration,
+            price: trainPrice,
+            totalCost: trainPrice,
+            availableClasses: ['3A', 'SL', '2A', '1A'],
+            amenities: ['Toilet', 'Pantry Car'],
+            apiSource: 'indian_railway',
+          };
+        });
+      }
+    } catch (trainServiceError) {
+      console.log(`⚠️ trainService error: ${trainServiceError.message}`);
     }
 
+    // ========== PRIORITY 2: Try external RapidAPI (fallback) ==========
+    try {
+      const apiKey = process.env.INDIAN_RAIL_API_KEY;
+
+      if (apiKey) {
+        const sourceCode = getStationCode(source);
+        const destCode = getStationCode(destination);
+
+        const response = await axios.get(
+          'https://indian-railway-api.p.rapidapi.com/trains/getBetweenStations',
+          {
+            params: {
+              from: sourceCode,
+              to: destCode,
+              date: date || getDefaultDepartureDate(),
+            },
+            headers: {
+              'X-RapidAPI-Key': apiKey,
+              'X-RapidAPI-Host': 'indian-railway-api.p.rapidapi.com',
+            },
+            timeout: 10000,
+          }
+        );
+
+        if (response.data && response.data.data && response.data.data.length > 0) {
+          console.log(`✅ Found ${response.data.data.length} trains via RapidAPI`);
+
+          return response.data.data.map((train) => ({
+            source: source,
+            destination: destination,
+            mode: 'train',
+            provider: 'Indian Railways',
+            trainNumber: train.train_no,
+            trainName: train.train_name,
+            class: train.class || 'SL',
+            departure: {
+              time: train.from_time,
+              station: source,
+            },
+            arrival: {
+              time: train.to_time,
+              station: destination,
+            },
+            duration: train.duration,
+            price: train.price || 500,
+            totalCost: train.price || 500,
+            availableClasses: ['3A', 'SL', '2A', '1A'],
+            amenities: ['Charging Point', 'Pantry Car'],
+            apiSource: 'indian_railway',
+          }));
+        }
+      }
+    } catch (rapidApiError) {
+      console.log(`⚠️ RapidAPI error: ${rapidApiError.message}`);
+    }
+
+    // ========== FALLBACK: Use estimated data ==========
+    console.log(`⚠️ No API data available, using fallback estimates`);
     return getFallbackTrains({ source, destination });
+
   } catch (error) {
-    console.log(`⚠️ Train API error: ${error.message}`);
+    console.log(`❌ Train search error: ${error.message}`);
     return getFallbackTrains({ source, destination });
   }
 };
@@ -432,6 +501,9 @@ const searchTrains = async ({ source, destination, date }) => {
 const getFallbackTrains = ({ source, destination }) => {
   const distance = calculateDistance(source, destination);
   const basePrice = Math.round(distance * 0.50); // ₹0.50 per km
+  const duration = Math.round(distance / 60); // Assume 60 km/h average
+
+  console.log(`📊 Using fallback train estimates (distance: ${distance}km, duration: ${duration}h)`);
 
   return [
     {
@@ -439,12 +511,26 @@ const getFallbackTrains = ({ source, destination }) => {
       destination: destination,
       mode: 'train',
       provider: 'Indian Railways',
+      trainNumber: '12001',
+      trainName: 'Rajdhani Express',
+      class: '2A',
+      duration: `${Math.round(duration * 0.75)}h`, // Faster
+      price: basePrice * 2.5,
+      totalCost: basePrice * 2.5,
+      availableClasses: ['1A', '2A', 'FC'],
+      apiSource: 'fallback',
+    },
+    {
+      source: source,
+      destination: destination,
+      mode: 'train',
+      provider: 'Indian Railways',
       trainNumber: '12345',
-      trainName: 'Express',
-      class: 'SL',
-      duration: `${Math.round(distance / 60)}h`,
-      price: basePrice,
-      totalCost: basePrice,
+      trainName: 'Superfast Express',
+      class: '3A',
+      duration: `${Math.round(duration * 0.85)}h`,
+      price: basePrice * 1.5,
+      totalCost: basePrice * 1.5,
       availableClasses: ['3A', 'SL', '2A'],
       apiSource: 'fallback',
     },
@@ -454,12 +540,26 @@ const getFallbackTrains = ({ source, destination }) => {
       mode: 'train',
       provider: 'Indian Railways',
       trainNumber: '12346',
-      trainName: 'Superfast',
-      class: '2A',
-      duration: `${Math.round(distance / 80)}h`,
-      price: basePrice * 2,
-      totalCost: basePrice * 2,
-      availableClasses: ['2A', '1A'],
+      trainName: 'Mail Express',
+      class: 'SL',
+      duration: `${duration}h`,
+      price: basePrice,
+      totalCost: basePrice,
+      availableClasses: ['3A', 'SL'],
+      apiSource: 'fallback',
+    },
+    {
+      source: source,
+      destination: destination,
+      mode: 'train',
+      provider: 'Indian Railways',
+      trainNumber: '12347',
+      trainName: 'Passenger Train',
+      class: 'UR',
+      duration: `${Math.round(duration * 1.2)}h`, // Slower, stops more
+      price: Math.round(basePrice * 0.3),
+      totalCost: Math.round(basePrice * 0.3),
+      availableClasses: ['UR', 'SL'],
       apiSource: 'fallback',
     },
   ];
@@ -645,6 +745,24 @@ const getAirlineName = (code) => {
 };
 
 /**
+ * Custom distances for specific routes (Punjab/Hindi belt cities)
+ */
+const customDistances = {
+  'delhi-patna': 900,
+  'patna-delhi': 900,
+  'phagwara-haridwar': 240,
+  'haridwar-phagwara': 240,
+  'phagwara-delhi': 270,
+  'delhi-phagwara': 270,
+  'phagwara-patna': 550,
+  'patna-phagwara': 550,
+  'phagwara-jalandhar': 65,
+  'jalandhar-phagwara': 65,
+  'phagwara-ludhiana': 60,
+  'ludhiana-phagwara': 60,
+};
+
+/**
  * Calculate approximate distance between cities (km)
  */
 const calculateDistance = (city1, city2) => {
@@ -659,6 +777,10 @@ const calculateDistance = (city1, city2) => {
 
   const key = `${city1.toLowerCase()}-${city2.toLowerCase()}`;
   const reverseKey = `${city2.toLowerCase()}-${city1.toLowerCase()}`;
+
+  // Check custom distances first
+  if (customDistances[key]) return customDistances[key];
+  if (customDistances[reverseKey]) return customDistances[reverseKey];
 
   return distances[key] || distances[reverseKey] || 1000; // Default 1000km
 };

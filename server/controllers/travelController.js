@@ -16,6 +16,27 @@ const { asyncHandler } = require('../middleware/errorHandler');
 exports.optimizeTrip = asyncHandler(async (req, res) => {
   const { source, destination, totalBudget, numberOfTravelers = 1, numberOfDays } = req.body;
 
+  // Helper function to format time (convert "12.40" to "12:40")
+  const formatTime = (timeStr) => {
+    if (!timeStr) return null;
+    return String(timeStr).replace('.', ':');
+  };
+
+  // Helper function to format duration (convert "16.52" decimal hours to "16h 32m")
+  const formatDuration = (durationStr) => {
+    if (!durationStr) return null;
+    const timeStr = String(durationStr).trim();
+    const parts = timeStr.split('.');
+    if (parts.length === 2) {
+      const hours = parseInt(parts[0], 10);
+      const decimalMinutes = parseInt(parts[1], 10);
+      // Convert decimal part to minutes (0-59 range)
+      const minutes = Math.round((decimalMinutes / 100) * 60);
+      return `${hours}h ${minutes}m`;
+    }
+    return timeStr; // Return as-is if format not recognized
+  };
+
   console.log(`\n🚀 Starting trip optimization...`);
   console.log(`📍 From: ${source} → To: ${destination}`);
   console.log(`💰 Budget: ₹${totalBudget}`);
@@ -55,14 +76,74 @@ exports.optimizeTrip = asyncHandler(async (req, res) => {
     optimizationResult.transport.mode &&
     (optimizationResult.transport.totalCost != null)
   ) {
+    const departure = optimizationResult.transport.departure;
+    const arrival = optimizationResult.transport.arrival;
+    
+    // Helper function to format time (convert "12.40" to "12:40")
+    const formatTime = (timeStr) => {
+      if (!timeStr) return null;
+      return String(timeStr).replace('.', ':');
+    };
+    
+    // Helper function to format duration (convert "16.52" decimal hours to "16h 32m")
+    const formatDuration = (durationStr) => {
+      if (!durationStr) return null;
+      const timeStr = String(durationStr).trim();
+      const parts = timeStr.split('.');
+      if (parts.length === 2) {
+        const hours = parseInt(parts[0], 10);
+        const decimalMinutes = parseInt(parts[1], 10);
+        // Convert decimal part to minutes (0-59 range)
+        const minutes = Math.round((decimalMinutes / 100) * 60);
+        return `${hours}h ${minutes}m`;
+      }
+      return timeStr; // Return as-is if format not recognized
+    };
+    
+    // Build proper departure object
+    let departureObj = null;
+    if (departure) {
+      if (typeof departure === 'object') {
+        // Already an object with time/location
+        departureObj = {
+          time: formatTime(departure.time),
+          location: departure.station || departure.location || source,
+        };
+      } else {
+        // Just a time string
+        departureObj = {
+          time: formatTime(departure),
+          location: source,
+        };
+      }
+    }
+    
+    // Build proper arrival object
+    let arrivalObj = null;
+    if (arrival) {
+      if (typeof arrival === 'object') {
+        // Already an object with time/location
+        arrivalObj = {
+          time: formatTime(arrival.time),
+          location: arrival.station || arrival.location || destination,
+        };
+      } else {
+        // Just a time string
+        arrivalObj = {
+          time: formatTime(arrival),
+          location: destination,
+        };
+      }
+    }
+    
     tripData.transport = {
       mode: optimizationResult.transport.mode,
       provider: optimizationResult.transport.provider,
       class: optimizationResult.transport.class,
       cost: optimizationResult.transport.totalCost * numberOfTravelers,
-      duration: optimizationResult.transport.duration,
-      departure: optimizationResult.transport.departure,
-      arrival: optimizationResult.transport.arrival,
+      journeyDuration: formatDuration(optimizationResult.transport.duration), // e.g., "16h 32m"
+      departure: departureObj,
+      arrival: arrivalObj,
       details: optimizationResult.transport,
     };
   }
@@ -106,7 +187,69 @@ exports.optimizeTrip = asyncHandler(async (req, res) => {
     tripData.alternativePlan = optimizationResult.alternativePlan;
   }
 
-  // Save trip to database
+  // ========== ADD ALTERNATIVE TRAINS SECTION ==========
+  // Build alternative transport options for display
+  let alternativeTrains = [];
+  if (
+    optimizationResult.alternativeTransports &&
+    Array.isArray(optimizationResult.alternativeTransports) &&
+    optimizationResult.alternativeTransports.length > 0
+  ) {
+    alternativeTrains = optimizationResult.alternativeTransports.map((alt) => {
+      const altDeparture = alt.departure;
+      const altArrival = alt.arrival;
+
+      let altDepartureObj = null;
+      if (altDeparture) {
+        if (typeof altDeparture === 'object') {
+          altDepartureObj = {
+            time: formatTime(altDeparture.time),
+            location: altDeparture.station || altDeparture.location || source,
+          };
+        } else {
+          altDepartureObj = {
+            time: formatTime(altDeparture),
+            location: source,
+          };
+        }
+      }
+
+      let altArrivalObj = null;
+      if (altArrival) {
+        if (typeof altArrival === 'object') {
+          altArrivalObj = {
+            time: formatTime(altArrival.time),
+            location: altArrival.station || altArrival.location || destination,
+          };
+        } else {
+          altArrivalObj = {
+            time: formatTime(altArrival),
+            location: destination,
+          };
+        }
+      }
+
+      return {
+        mode: alt.mode,
+        provider: alt.provider,
+        trainName: alt.trainName,
+        trainNumber: alt.trainNumber,
+        class: alt.class,
+        price: alt.totalCost,
+        cost: alt.totalCost * numberOfTravelers,
+        journeyDuration: formatDuration(alt.duration), // e.g., "16h 32m"
+        departure: altDepartureObj,
+        arrival: altArrivalObj,
+        amenities: alt.amenities,
+        apiSource: alt.apiSource,
+      };
+    });
+  }
+
+  // Add alternative plan if exists
+  if (optimizationResult.alternativePlan) {
+    tripData.alternativePlan = optimizationResult.alternativePlan;
+  }
   const trip = await Trip.create(tripData);
 
   console.log(`✅ Trip optimization completed!`);
@@ -120,6 +263,7 @@ exports.optimizeTrip = asyncHandler(async (req, res) => {
     data: {
       tripId: trip._id,
       optimization: optimizationResult,
+      alternativeTrains: alternativeTrains, // Showcase other railway options
       trip: {
         source: trip.source.city,
         destination: trip.destination.city,

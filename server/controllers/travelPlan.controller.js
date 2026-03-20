@@ -25,8 +25,8 @@ async function buildAndGeneratePlan({ source, destination, budget, currency, tra
     travelers,
   });
 
-  // 3. Build AI prompt
-  const { systemPrompt, userPrompt } = buildTravelPlanPrompt({
+  // 3. Build AI prompt (async — fetches live train data from erail.in)
+  const { systemPrompt, userPrompt } = await buildTravelPlanPrompt({
     source,
     destination,
     budget,

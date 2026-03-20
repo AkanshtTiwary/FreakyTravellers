@@ -116,11 +116,11 @@ const tripSchema = new mongoose.Schema(
       },
       duration: String, // "5h 30m"
       departure: {
-        time: Date,
+        time: String, // HH:MM format (e.g., "12:40", "05:32")
         location: String,
       },
       arrival: {
-        time: Date,
+        time: String, // HH:MM format (e.g., "12:40", "05:32")
         location: String,
       },
       details: mongoose.Schema.Types.Mixed, // Additional transport details
