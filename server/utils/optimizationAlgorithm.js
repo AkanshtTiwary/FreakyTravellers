@@ -70,13 +70,32 @@ const optimizeTripBudget = async ({
     // so any budget — even ₹1 — finds at least one viable transport option
     transportOptions = [...transportOptions, ...getUltraBudgetTransportOptions(source, destination)];
 
-    // ========== STEP 2: Sort — real API data first, then by price ==========
-    // Amadeus/real-API results are prioritised over fallback estimates
+    // ========== STEP 2: Sort — smart priority for long-distance routes ==========
+    // For long-distance routes (Delhi-Mumbai, etc), prioritize: flights > trains > buses
+    // For short routes: price is the main factor
+    const majorCities = ['delhi', 'patna', 'mumbai', 'bangalore', 'hyderabad', 'kolkata', 'goa', 'jaipur', 'pune', 'chandigarh'];
+    const routeKey = `${(source || '').toLowerCase()}-${(destination || '').toLowerCase()}`;
+    const isLongDistance = majorCities.some(city => 
+      routeKey.includes(city) && routeKey.split('-').length === 2 && 
+      routeKey.split('-')[0] !== routeKey.split('-')[1]
+    );
+
     transportOptions.sort((a, b) => {
+      // Priority 1: Real API data first
       const aReal = a.apiSource === 'amadeus' || a.apiSource === 'indian_railway' || a.apiSource === 'database';
       const bReal = b.apiSource === 'amadeus' || b.apiSource === 'indian_railway' || b.apiSource === 'database';
       if (aReal && !bReal) return -1;
       if (!aReal && bReal) return 1;
+
+      // Priority 2: For long distances, prefer flights, then trains, then buses
+      if (isLongDistance) {
+        const modeOrder = { 'flight': 0, 'train': 1, 'bus': 2, 'shared-auto': 3, 'rickshaw': 4, 'walk': 5 };
+        const aOrder = modeOrder[a.mode] ?? 99;
+        const bOrder = modeOrder[b.mode] ?? 99;
+        if (aOrder !== bOrder) return aOrder - bOrder;
+      }
+
+      // Priority 3: Sort by price
       return a.totalCost - b.totalCost;
     });
 
@@ -85,18 +104,44 @@ const optimizeTripBudget = async ({
     let remainingBudget = 0;
     let budgetMode = 'normal'; // 'normal' | 'tight' | 'ultra'
 
-    // Pass 1: Standard — allow up to 70% of budget for transport
+    // Determine budget threshold based on route and mode preference
+    let transportBudgetThreshold = 0.70; // 70% by default
+    
+    // For long-distance routes with real API options (flights/trains), allow up to 50% for better comfort
+    const hasRealOptions = transportOptions.some(t => 
+      t.apiSource === 'amadeus' || t.apiSource === 'indian_railway' || t.apiSource === 'database'
+    );
+    if (isLongDistance && hasRealOptions) {
+      transportBudgetThreshold = 0.50; // Allow 50% for long-distance flights/trains
+    }
+
+    // Pass 1: Standard — allow reasonable % of budget for transport
     for (const transport of transportOptions) {
       const transportCost = transport.totalCost * numberOfTravelers;
-      if (transportCost <= totalBudget * 0.7) {
+      if (transportCost <= totalBudget * transportBudgetThreshold) {
         selectedTransport = transport;
         remainingBudget = totalBudget - transportCost;
         budgetMode = 'normal';
+        console.log(`✅ Selected ${transport.mode}: ₹${transport.totalCost} (${Math.round((transportCost/totalBudget)*100)}% of budget)`);
         break;
       }
     }
 
-    // Pass 2: Tight budget — allow 100% for transport; use free food/accommodation
+    // Pass 2: Tight budget — allow up to 70% for transport; use free food/accommodation
+    if (!selectedTransport) {
+      for (const transport of transportOptions) {
+        const transportCost = transport.totalCost * numberOfTravelers;
+        if (transportCost <= totalBudget * 0.7) {
+          selectedTransport = transport;
+          remainingBudget = totalBudget - transportCost;
+          budgetMode = 'tight';
+          console.log(`✅ Tight budget — Selected ${transport.mode}: ₹${transport.totalCost}`);
+          break;
+        }
+      }
+    }
+
+    // Pass 3: Tight-tight budget — allow up to 100% for transport
     if (!selectedTransport) {
       for (const transport of transportOptions) {
         const transportCost = transport.totalCost * numberOfTravelers;
@@ -104,18 +149,20 @@ const optimizeTripBudget = async ({
           selectedTransport = transport;
           remainingBudget = Math.max(0, totalBudget - transportCost);
           budgetMode = 'tight';
+          console.log(`✅ Very tight budget — Selected ${transport.mode}: ₹${transport.totalCost}`);
           break;
         }
       }
     }
 
-    // Pass 3: Ultra mode — use cheapest available, rely entirely on free resources
+    // Pass 4: Ultra mode — use cheapest available, rely entirely on free resources
     if (!selectedTransport) {
       const sortedByPrice = [...transportOptions].sort((a, b) => a.totalCost - b.totalCost);
       if (sortedByPrice.length > 0) {
         selectedTransport = sortedByPrice[0];
         remainingBudget = 0;
         budgetMode = 'ultra';
+        console.log(`⚠️ Ultra-low budget — Selected cheapest: ${selectedTransport.mode} ₹${selectedTransport.totalCost}`);
       }
     }
 
@@ -135,23 +182,45 @@ const optimizeTripBudget = async ({
     optimizationResult.transport = selectedTransport;
 
     // ========== ADD STEP 3.5: Collect Alternative Transport Options ==========
-    // Filter for train alternatives if selected transport is a train
+    // Show flights, trains, and buses as alternatives based on what was selected
     let alternativeTransports = [];
+    
+    // If train was selected, show flight and bus alternatives
     if (selectedTransport.mode === 'train' || selectedTransport.apiSource === 'indian_railway') {
-      // Get other train options (excluding the selected one)
       alternativeTransports = transportOptions
-        .filter(
-          (t) =>
-            t.mode === 'train' &&
-            t.apiSource === 'indian_railway' &&
-            t.trainNumber !== selectedTransport.trainNumber
-        )
-        .slice(0, 4); // Show top 4 alternatives
-      
-      if (alternativeTransports.length > 0) {
-        console.log(`📚 Found ${alternativeTransports.length} alternative train options`);
-        optimizationResult.alternativeTransports = alternativeTransports;
-      }
+        .filter(t => {
+          // Show flights and buses as alternatives to trains
+          if (t.mode === 'flight' && t.totalCost * numberOfTravelers <= totalBudget) {
+            return true;
+          }
+          if (t.mode === 'bus' && t.totalCost !== selectedTransport.totalCost) {
+            return true;
+          }
+          // Also include other trains with different classes/departure times
+          if (t.mode === 'train' && t.trainNumber !== selectedTransport.trainNumber) {
+            return true;
+          }
+          return false;
+        })
+        .slice(0, 5); // Top 5 alternatives
+    }
+    // If flight was selected, show train and bus alternatives
+    else if (selectedTransport.mode === 'flight' || selectedTransport.apiSource === 'amadeus') {
+      alternativeTransports = transportOptions
+        .filter(t => {
+          // Show trains and buses as budget alternatives to flights
+          if ((t.mode === 'train' || t.mode === 'bus') && t.totalCost * numberOfTravelers <= totalBudget * 0.7) {
+            return true;
+          }
+          return false;
+        })
+        .sort((a, b) => a.totalCost - b.totalCost)
+        .slice(0, 5); // Top 5 budget alternatives
+    }
+    
+    if (alternativeTransports.length > 0) {
+      console.log(`📚 Found ${alternativeTransports.length} alternative transport options`);
+      optimizationResult.alternativeTransports = alternativeTransports;
     }
 
     if (budgetMode === 'tight') {
@@ -161,10 +230,42 @@ const optimizeTripBudget = async ({
       });
     }
 
-    optimizationResult.optimizationNotes.push({
-      type: 'info',
-      message: `Selected ${selectedTransport.mode} as the most budget-friendly option`,
-    });
+    // Add explanation for transport selection
+    const transportCostPercent = Math.round((selectedTransport.totalCost * numberOfTravelers / totalBudget) * 100);
+    
+    if (isLongDistance) {
+      // Check if flights were available but not affordable
+      const availableFlights = transportOptions.filter(t => t.mode === 'flight' && t.apiSource === 'amadeus');
+      if (availableFlights.length > 0 && selectedTransport.mode !== 'flight') {
+        const cheapestFlight = availableFlights.sort((a, b) => a.totalCost - b.totalCost)[0];
+        const flightCost = cheapestFlight.totalCost * numberOfTravelers;
+        const trainCost = selectedTransport.totalCost * numberOfTravelers;
+        
+        optimizationResult.optimizationNotes.push({
+          type: 'info',
+          message: `Selected ${selectedTransport.mode} (₹${trainCost}) over available flights (₹${flightCost}) to stay within budget. Budget allows ${transportCostPercent}% for transport.`,
+        });
+        optimizationResult.optimizationNotes.push({
+          type: 'suggestion',
+          message: `💡 Tip: Check for flight deals or consider increasing budget to ₹${Math.round((flightCost / 0.5) + 1000)} for a more comfortable journey.`,
+        });
+      } else if (selectedTransport.mode === 'flight') {
+        optimizationResult.optimizationNotes.push({
+          type: 'success',
+          message: `Great! Your budget allows for a comfortable flight option (${transportCostPercent}% of budget).`,
+        });
+      } else {
+        optimizationResult.optimizationNotes.push({
+          type: 'info',
+          message: `Selected budget-friendly ${selectedTransport.mode} (₹${selectedTransport.totalCost * numberOfTravelers}) for your long-distance journey.`,
+        });
+      }
+    } else {
+      optimizationResult.optimizationNotes.push({
+        type: 'info',
+        message: `Selected ${selectedTransport.mode} as the most suitable option for this route.`,
+      });
+    }
 
     // ========== STEP 4: Calculate Duration Based on Budget or User Input ==========
     let tripDuration;
@@ -1090,7 +1191,7 @@ const getAttractionSuggestions = (city, activitiesBudget) => {
 /**
  * Ultra-budget transport options appended to every search.
  * Ensures any budget (even ₹1) always has a viable transport option available.
- * Includes: unreserved train, state bus, shared auto, cycle rickshaw, walking.
+ * Distance-aware: Only shows appropriate modes based on route distance.
  * All fares are ESTIMATED — TODO: replace with real per-route fare lookup when available.
  */
 const getUltraBudgetTransportOptions = (source, destination) => {
@@ -1100,70 +1201,101 @@ const getUltraBudgetTransportOptions = (source, destination) => {
     (source.toLowerCase() === destination.toLowerCase() ||
      source.includes('nearby') || destination.includes('nearby')));
   
-  // Estimate if this is a long-distance route (no short routes)
-  const isLongDistance = routeKey.includes('delhi') || routeKey.includes('patna') || 
-                         routeKey.includes('mumbai') || routeKey.includes('bangalore') ||
-                         routeKey.includes('hyderabad') || routeKey.includes('kolkata');
+  // Major cities that have long intercity routes
+  const majorCities = ['delhi', 'patna', 'mumbai', 'bangalore', 'hyderabad', 'kolkata', 'goa', 'jaipur', 'pune', 'chandigarh'];
+  const isLongDistance = majorCities.some(city => 
+    routeKey.includes(city) && routeKey.split('-').length === 2 && 
+    routeKey.split('-')[0] !== routeKey.split('-')[1]
+  );
   
-  const allOptions = [
-    {
-      mode: 'bus',
-      provider: 'State Roadways Bus (General / Ordinary)',
-      class: 'general',
-      totalCost: 120,
-      duration: 'Varies by route',
-      note: 'Government bus — cheapest intercity option. No AC. Available on most routes.',
-      apiSource: 'estimated',
-      budgetType: 'ultra',
-    },
-    {
-      mode: 'train',
-      provider: 'Indian Railways — Unreserved (General Class)',
-      class: 'general',
-      totalCost: 75,
-      duration: 'Varies by route',
-      note: 'No reservation needed. Cheapest rail option at approx ₹0.8–1.5/km.',
-      apiSource: 'estimated',
-      budgetType: 'ultra',
-    },
-    {
-      mode: 'shared-auto',
-      provider: 'Local Shared Auto Rickshaw',
-      class: 'shared',
-      totalCost: 40,
-      duration: 'Short distances (under 20 km)',
-      note: 'Fixed route, shared with other passengers. Ask locals for the right route.',
-      apiSource: 'estimated',
-      budgetType: 'ultra',
-    },
-  ];
+  const allOptions = [];
   
-  // Only add cycle rickshaw for short/local distances (NOT for long intercity routes)
-  if (!isLongDistance) {
-    allOptions.push({
-      mode: 'rickshaw',
-      provider: 'Cycle Rickshaw',
-      class: 'manual',
-      totalCost: 25,
-      duration: 'Very short distances (under 5 km)',
-      note: 'Ideal for last-mile travel. Always negotiate fare before boarding.',
-      apiSource: 'estimated',
-      budgetType: 'ultra',
-    });
+  // ========== LONG DISTANCE ROUTES (e.g., Delhi-Mumbai, Delhi-Bangalore) ==========
+  // For long distances, ONLY show intercity transport (train, bus, flight)
+  // NO shared-auto, NO cycle rickshaw, NO walking (these are inappropriate)
+  if (isLongDistance) {
+    allOptions.push(
+      {
+        mode: 'train',
+        provider: 'Indian Railways — Unreserved (General Class)',
+        class: 'general',
+        totalCost: 75,
+        duration: 'Varies by route',
+        note: 'No reservation needed. Cheapest rail option at approx ₹0.8–1.5/km. Ideal for long distances.',
+        apiSource: 'estimated',
+        budgetType: 'ultra',
+      },
+      {
+        mode: 'bus',
+        provider: 'State Roadways Bus (General / Ordinary)',
+        class: 'general',
+        totalCost: 120,
+        duration: 'Varies by route',
+        note: 'Government bus — cheapest intercity option. No AC. Available on most routes.',
+        apiSource: 'estimated',
+        budgetType: 'ultra',
+      },
+      {
+        mode: 'flight-budget',
+        provider: 'Budget Airlines',
+        class: 'economy',
+        totalCost: 2500,
+        duration: 'Check availability',
+        note: 'Economy flights from IndiGo, SpiceJet, GoAir. Check for flash sales and offers. Often cheaper than trains/buses!',
+        apiSource: 'estimated',
+        budgetType: 'ultra-stretch',
+      }
+    );
   }
-  
-  // Only add walk for very short/same-location distances
-  if (isShortDistance) {
-    allOptions.push({
-      mode: 'walk',
-      provider: 'On foot',
-      class: 'general',
-      totalCost: 0,
-      duration: 'Distances under 3 km',
-      note: 'Completely free. Use offline maps (Google Maps / Maps.me) and ask locals.',
-      apiSource: 'estimated',
-      budgetType: 'ultra',
-    });
+  // ========== SHORT DISTANCE ROUTES (local/within-city) ==========
+  else {
+    // For short/local distances, include local transport modes
+    allOptions.push(
+      {
+        mode: 'shared-auto',
+        provider: 'Local Shared Auto Rickshaw',
+        class: 'shared',
+        totalCost: 40,
+        duration: 'Short distances (under 20 km)',
+        note: 'Fixed route, shared with other passengers. Ask locals for the right route.',
+        apiSource: 'estimated',
+        budgetType: 'ultra',
+      },
+      {
+        mode: 'rickshaw',
+        provider: 'Cycle Rickshaw',
+        class: 'manual',
+        totalCost: 25,
+        duration: 'Very short distances (under 5 km)',
+        note: 'Ideal for last-mile travel. Always negotiate fare before boarding.',
+        apiSource: 'estimated',
+        budgetType: 'ultra',
+      },
+      {
+        mode: 'bus',
+        provider: 'City Bus',
+        class: 'general',
+        totalCost: 20,
+        duration: 'Local routes',
+        note: 'Cheapest public transport for city travel.',
+        apiSource: 'estimated',
+        budgetType: 'ultra',
+      }
+    );
+    
+    // Only add walk for very short/same-location distances
+    if (isShortDistance) {
+      allOptions.push({
+        mode: 'walk',
+        provider: 'On foot',
+        class: 'general',
+        totalCost: 0,
+        duration: 'Distances under 3 km',
+        note: 'Completely free. Use offline maps (Google Maps / Maps.me) and ask locals.',
+        apiSource: 'estimated',
+        budgetType: 'ultra',
+      });
+    }
   }
   
   return allOptions;
