@@ -5,14 +5,15 @@
 
 const RailPrettify = require('../utils/railPrettify');
 const UserAgent = require('user-agents');
+const TTLCache = require('../utils/cache');
+const logger = require('../utils/logger');
 
 const prettify = new RailPrettify();
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Cache Configuration & Management
+// Cache Configuration & Management (using centralized TTL cache utility)
 // ──────────────────────────────────────────────────────────────────────────────
-const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
-const trainCache = new Map();
+const trainCache = new TTLCache(30); // 30 minute TTL
 
 /**
  * Generate cache key for route
@@ -22,27 +23,17 @@ function getCacheKey(fromCode, toCode) {
 }
 
 /**
- * Check if cache entry is still valid
- */
-function isCacheValid(timestamp) {
-  return Date.now() - timestamp < CACHE_TTL;
-}
-
-/**
- * Get from cache with TTL validation
+ * Get from cache
  */
 function getFromCache(fromCode, toCode) {
   const key = getCacheKey(fromCode, toCode);
   const cached = trainCache.get(key);
   
-  if (cached && isCacheValid(cached.timestamp)) {
-    console.log(`✅ Cache hit for ${fromCode} → ${toCode}`);
-    return cached.data;
+  if (cached) {
+    logger.debug(`Cache hit for ${fromCode} → ${toCode}`);
+    return cached;
   }
   
-  if (cached) {
-    trainCache.delete(key);
-  }
   return null;
 }
 
@@ -51,10 +42,7 @@ function getFromCache(fromCode, toCode) {
  */
 function setInCache(fromCode, toCode, data) {
   const key = getCacheKey(fromCode, toCode);
-  trainCache.set(key, {
-    data,
-    timestamp: Date.now(),
-  });
+  trainCache.set(key, data);
 }
 
 /**
@@ -271,7 +259,7 @@ async function getTrainsBetweenStations(fromCity, toCity) {
     }
 
     // If no direct trains, try multi-hop routing
-    console.log(`⚠️ No direct trains found. Attempting multi-hop routing for ${fromCity} → ${toCity}`);
+    logger.debug(`No direct trains found. Attempting multi-hop routing for ${fromCity} → ${toCity}`);
     const multiHopResult = await getMultiHopTrains(fromCode, toCode, fromCity, toCity);
 
     if (multiHopResult.success) {
@@ -284,7 +272,7 @@ async function getTrainsBetweenStations(fromCity, toCity) {
     setInCache(fromCode, toCode, directResult);
     return directResult;
   } catch (error) {
-    console.error('Error fetching trains between stations:', error.message);
+    logger.error('Error fetching trains between stations: ' + error.message);
     return {
       success: false,
       data: `Error: ${error.message}`,
@@ -363,13 +351,13 @@ async function getMultiHopTrains(fromCode, toCode, fromCity, toCity) {
       // Get intermediate station city name
       const intermediateCity = getStationCityName(intermediateCode);
 
-      console.log(`🔄 Trying route: ${fromCity} → ${intermediateCity} → ${toCity}`);
+      logger.debug(`Trying route: ${fromCity} → ${intermediateCity} → ${toCity}`);
 
       // Fetch first leg: from → intermediate
       const leg1 = await fetchDirectTrains(fromCode, intermediateCode, fromCity, intermediateCity);
 
       if (!leg1.success || !leg1.data || leg1.data.length === 0) {
-        console.log(`   ❌ No trains for ${fromCity} → ${intermediateCity}`);
+        logger.debug(`No trains for ${fromCity} → ${intermediateCity}`);
         continue;
       }
 
@@ -377,12 +365,13 @@ async function getMultiHopTrains(fromCode, toCode, fromCity, toCity) {
       const leg2 = await fetchDirectTrains(intermediateCode, toCode, intermediateCity, toCity);
 
       if (!leg2.success || !leg2.data || leg2.data.length === 0) {
-        console.log(`   ❌ No trains for ${intermediateCity} → ${toCity}`);
+        logger.debug(`No trains for ${intermediateCity} → ${toCity}`);
         continue;
       }
 
       validRouteFound = true;
-      console.log(`   ✅ Found ${leg1.data.length} trains (${fromCity}→${intermediateCity}) and ${leg2.data.length} trains (${intermediateCity}→${toCity})`);
+      logger.debug(`Found ${leg1.data.length} trains (${fromCity}→${intermediateCity}) and ${leg2.data.length} trains (${intermediateCity}→${toCity})`);
+
 
       // Combine multi-hop trains with metadata
       allMultiHopTrains.push({
@@ -413,7 +402,7 @@ async function getMultiHopTrains(fromCode, toCode, fromCity, toCity) {
       timestamp: Date.now(),
     };
   } catch (error) {
-    console.error('Error in multi-hop routing:', error.message);
+    logger.error('Error in multi-hop routing: ' + error.message);
     return {
       success: false,
       data: `Error in multi-hop routing: ${error.message}`,
@@ -500,7 +489,7 @@ async function getTrainsOnDate(fromCity, toCity, date) {
       is_multi_hop: false,
     };
   } catch (error) {
-    console.error('Error getting trains on date:', error.message);
+    logger.error('Error getting trains on date: ' + error.message);
     return {
       success: false,
       data: `Error: ${error.message}`,
@@ -537,7 +526,7 @@ async function getTrainInfo(trainNumber) {
     const htmlData = await response.text();
     return prettify.checkTrain(htmlData);
   } catch (error) {
-    console.error('Error fetching train info:', error.message);
+    logger.error('Error fetching train info: ' + error.message);
     return {
       success: false,
       data: `Error: ${error.message}`,
@@ -607,7 +596,7 @@ async function getTrainRoute(trainNumber) {
       train_name: trainInfo.data.train_name,
     };
   } catch (error) {
-    console.error('Error fetching train route:', error.message);
+    logger.error('Error fetching train route: ' + error.message);
     return {
       success: false,
       data: `Error: ${error.message}`,

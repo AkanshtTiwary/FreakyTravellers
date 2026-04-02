@@ -253,6 +253,7 @@ transportSchema.statics.getRouteOptions = function (source, destination) {
     'availability.isAvailable': true,
   })
     .sort({ 'pricing.total': 1 })
+    .limit(20)
     .exec();
 };
 

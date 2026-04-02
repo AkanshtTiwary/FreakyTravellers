@@ -7,6 +7,8 @@ const Trip = require('../models/Trip');
 const { optimizeTripBudget } = require('../utils/optimizationAlgorithm');
 const { optimizeMultiDestinationTrip } = require('../services/multiDestinationOptimizer');
 const { asyncHandler } = require('../middleware/errorHandler');
+const { formatTime, formatDuration } = require('../utils/dateFormatter');
+const logger = require('../utils/logger');
 
 /**
  * @desc    Optimize trip based on budget
@@ -16,32 +18,9 @@ const { asyncHandler } = require('../middleware/errorHandler');
 exports.optimizeTrip = asyncHandler(async (req, res) => {
   const { source, destination, totalBudget, numberOfTravelers = 1, numberOfDays } = req.body;
 
-  // Helper function to format time (convert "12.40" to "12:40")
-  const formatTime = (timeStr) => {
-    if (!timeStr) return null;
-    return String(timeStr).replace('.', ':');
-  };
-
-  // Helper function to format duration (convert "16.52" decimal hours to "16h 32m")
-  const formatDuration = (durationStr) => {
-    if (!durationStr) return null;
-    const timeStr = String(durationStr).trim();
-    const parts = timeStr.split('.');
-    if (parts.length === 2) {
-      const hours = parseInt(parts[0], 10);
-      const decimalMinutes = parseInt(parts[1], 10);
-      // Convert decimal part to minutes (0-59 range)
-      const minutes = Math.round((decimalMinutes / 100) * 60);
-      return `${hours}h ${minutes}m`;
-    }
-    return timeStr; // Return as-is if format not recognized
-  };
-
-  console.log(`\n🚀 Starting trip optimization...`);
-  console.log(`📍 From: ${source} → To: ${destination}`);
-  console.log(`💰 Budget: ₹${totalBudget}`);
-  console.log(`👥 Travelers: ${numberOfTravelers}`);
-  if (numberOfDays) console.log(`📅 Days: ${numberOfDays}`);
+  logger.debug(`Trip optimization started: ${source} → ${destination}`);
+  logger.debug(`Budget: ₹${totalBudget}, Travelers: ${numberOfTravelers}`);
+  if (numberOfDays) logger.debug(`Days: ${numberOfDays}}`);
 
   // Run optimization algorithm
   const optimizationResult = await optimizeTripBudget({
@@ -78,27 +57,6 @@ exports.optimizeTrip = asyncHandler(async (req, res) => {
   ) {
     const departure = optimizationResult.transport.departure;
     const arrival = optimizationResult.transport.arrival;
-    
-    // Helper function to format time (convert "12.40" to "12:40")
-    const formatTime = (timeStr) => {
-      if (!timeStr) return null;
-      return String(timeStr).replace('.', ':');
-    };
-    
-    // Helper function to format duration (convert "16.52" decimal hours to "16h 32m")
-    const formatDuration = (durationStr) => {
-      if (!durationStr) return null;
-      const timeStr = String(durationStr).trim();
-      const parts = timeStr.split('.');
-      if (parts.length === 2) {
-        const hours = parseInt(parts[0], 10);
-        const decimalMinutes = parseInt(parts[1], 10);
-        // Convert decimal part to minutes (0-59 range)
-        const minutes = Math.round((decimalMinutes / 100) * 60);
-        return `${hours}h ${minutes}m`;
-      }
-      return timeStr; // Return as-is if format not recognized
-    };
     
     // Build proper departure object
     let departureObj = null;

@@ -18,6 +18,7 @@
 
 const { searchFlights, searchHotels, searchTrains } = require('./externalApiService');
 const { fetchDestinationImages } = require('./imageService');
+const logger = require('../utils/logger');
 
 /**
  * Main Multi-Destination Optimizer
@@ -173,7 +174,7 @@ const optimizeMultiDestinationTrip = async ({
       }
 
       if (!selectedOption) {
-        console.log(`⚠️ No travel options found for ${leg.from} → ${leg.to}`);
+        logger.debug(`No travel options found for ${leg.from} → ${leg.to}`);
         continue;
       }
 
@@ -182,21 +183,21 @@ const optimizeMultiDestinationTrip = async ({
       selectedTravel.push({
         from: leg.from,
         to: leg.to,
-        mode: cheapest.mode,
-        provider: cheapest.provider || cheapest.airline || 'Unknown',
-        details: cheapest,
-        costPerPerson: cheapest.totalCost || cheapest.price,
+        mode: selectedOption.mode || selectedOption.type,
+        provider: selectedOption.provider || selectedOption.airline || 'Unknown',
+        details: selectedOption,
+        costPerPerson: selectedOption.totalCost || selectedOption.price,
         totalCost: costForAllTravelers,
       });
 
       totalTravelCost += costForAllTravelers;
 
-      console.log(`   ${leg.from} → ${leg.to}: ${cheapest.mode} - ₹${costForAllTravelers}`);
+      console.log(`   ${leg.from} → ${leg.to}: ${selectedOption.mode || selectedOption.type} - ₹${costForAllTravelers}`);
     }
 
     // Check if travel cost exceeds allocation
     if (totalTravelCost > budgetAllocation.travel) {
-      console.log(`\n⚠️ WARNING: Travel cost (₹${totalTravelCost}) exceeds allocation (₹${budgetAllocation.travel})`);
+      logger.warn(`Travel cost (₹${totalTravelCost}) exceeds allocation (₹${budgetAllocation.travel})`);
 
       return handleBudgetExceeded({
         startCity,

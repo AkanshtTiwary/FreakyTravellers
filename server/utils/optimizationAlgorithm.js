@@ -22,6 +22,7 @@ const Transport = require('../models/Transport');
 const Hotel = require('../models/Hotel');
 const Restaurant = require('../models/Restaurant');
 const { searchFlights, searchTrains, searchHotels } = require('../services/externalApiService');
+const logger = require('./logger');
 
 /**
  * Main Optimization Function
@@ -54,7 +55,7 @@ const optimizeTripBudget = async ({
     };
 
     // ========== STEP 1: Fetch Transport Options ==========
-    console.log(`🔍 Searching transport from ${source} to ${destination}...`);
+    logger.debug(`Searching transport from ${source} to ${destination}...`);
 
     let transportOptions = await fetchTransportOptions(source, destination);
 
@@ -122,7 +123,7 @@ const optimizeTripBudget = async ({
         selectedTransport = transport;
         remainingBudget = totalBudget - transportCost;
         budgetMode = 'normal';
-        console.log(`✅ Selected ${transport.mode}: ₹${transport.totalCost} (${Math.round((transportCost/totalBudget)*100)}% of budget)`);
+        logger.debug(`Selected ${transport.mode}: ₹${transport.totalCost} (${Math.round((transportCost/totalBudget)*100)}% of budget)`);
         break;
       }
     }
@@ -135,7 +136,7 @@ const optimizeTripBudget = async ({
           selectedTransport = transport;
           remainingBudget = totalBudget - transportCost;
           budgetMode = 'tight';
-          console.log(`✅ Tight budget — Selected ${transport.mode}: ₹${transport.totalCost}`);
+          logger.debug(`Tight budget — Selected ${transport.mode}: ₹${transport.totalCost}`);
           break;
         }
       }
@@ -149,7 +150,7 @@ const optimizeTripBudget = async ({
           selectedTransport = transport;
           remainingBudget = Math.max(0, totalBudget - transportCost);
           budgetMode = 'tight';
-          console.log(`✅ Very tight budget — Selected ${transport.mode}: ₹${transport.totalCost}`);
+          logger.debug(`Very tight budget — Selected ${transport.mode}: ₹${transport.totalCost}`);
           break;
         }
       }
@@ -162,13 +163,13 @@ const optimizeTripBudget = async ({
         selectedTransport = sortedByPrice[0];
         remainingBudget = 0;
         budgetMode = 'ultra';
-        console.log(`⚠️ Ultra-low budget — Selected cheapest: ${selectedTransport.mode} ₹${selectedTransport.totalCost}`);
+        logger.debug(`Ultra-low budget — Selected cheapest: ${selectedTransport.mode} ₹${selectedTransport.totalCost}`);
       }
     }
 
     // Ultra/impossible mode: build community-resource plan
     if (!selectedTransport || budgetMode === 'ultra') {
-      console.log('⚠️ Ultra-low budget — building community-resource plan');
+      logger.debug('Ultra-low budget — building community-resource plan');
       return handleLowBudgetScenario({
         source,
         destination,
@@ -219,7 +220,7 @@ const optimizeTripBudget = async ({
     }
     
     if (alternativeTransports.length > 0) {
-      console.log(`📚 Found ${alternativeTransports.length} alternative transport options`);
+      logger.debug(`Found ${alternativeTransports.length} alternative transport options`);
       optimizationResult.alternativeTransports = alternativeTransports;
     }
 
@@ -366,7 +367,7 @@ const optimizeTripBudget = async ({
 
     return optimizationResult;
   } catch (error) {
-    console.error('❌ Optimization Error:', error);
+    logger.error(`Optimization Error: ${error.message}`);
     throw new Error(`Trip optimization failed: ${error.message}`);
   }
 };

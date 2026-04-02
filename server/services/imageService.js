@@ -16,29 +16,29 @@
  */
 
 const axios = require('axios');
+const TTLCache = require('../utils/cache');
+const logger = require('../utils/logger');
 
-// ==================== IN-MEMORY CACHE ====================
-const imageCache = new Map();
-const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+// ==================== IN-MEMORY CACHE (using centralized TTL cache utility) ====================
+const imageCache = new TTLCache(1440); // 24 hours (1440 minutes) TTL
 
 /**
  * Cache Management
  */
 const getCachedImages = (destination) => {
-  const cached = imageCache.get(destination.toLowerCase());
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    console.log(`✅ Cache hit for: ${destination}`);
-    return cached.data;
+  const key = destination.toLowerCase();
+  const cached = imageCache.get(key);
+  if (cached) {
+    logger.debug(`Cache hit for: ${destination}`);
+    return cached;
   }
   return null;
 };
 
 const setCachedImages = (destination, data) => {
-  imageCache.set(destination.toLowerCase(), {
-    data,
-    timestamp: Date.now(),
-  });
-  console.log(`💾 Cached images for: ${destination}`);
+  const key = destination.toLowerCase();
+  imageCache.set(key, data);
+  logger.debug(`Cached images for: ${destination}`);
 };
 
 // ==================== SEARCH QUERY OPTIMIZATION ====================
@@ -70,7 +70,7 @@ const fetchFromUnsplash = async (destination) => {
     const accessKey = process.env.UNSPLASH_ACCESS_KEY;
     
     if (!accessKey) {
-      console.log('⚠️ Unsplash API key not configured');
+      logger.warn('Unsplash API key not configured');
       return null;
     }
 
@@ -90,7 +90,7 @@ const fetchFromUnsplash = async (destination) => {
     });
 
     if (response.data.results && response.data.results.length > 0) {
-      console.log(`✅ Unsplash: Found ${response.data.results.length} images`);
+      logger.debug(`Unsplash: Found ${response.data.results.length} images`);
       
       return response.data.results.map(img => ({
         url: img.urls.regular,
@@ -109,9 +109,9 @@ const fetchFromUnsplash = async (destination) => {
   } catch (error) {
     // Handle rate limiting
     if (error.response?.status === 403 || error.response?.status === 429) {
-      console.log('⚠️ Unsplash: Rate limit exceeded');
+      logger.warn('Unsplash: Rate limit exceeded');
     } else {
-      console.log(`⚠️ Unsplash error: ${error.message}`);
+      logger.debug(`Unsplash error: ${error.message}`);
     }
     return null;
   }
@@ -129,7 +129,7 @@ const fetchFromPexels = async (destination) => {
     const apiKey = process.env.PEXELS_API_KEY;
     
     if (!apiKey) {
-      console.log('⚠️ Pexels API key not configured');
+      logger.warn('Pexels API key not configured');
       return null;
     }
 
@@ -148,7 +148,7 @@ const fetchFromPexels = async (destination) => {
     });
 
     if (response.data.photos && response.data.photos.length > 0) {
-      console.log(`✅ Pexels: Found ${response.data.photos.length} images`);
+      logger.debug(`Pexels: Found ${response.data.photos.length} images`);
       
       return response.data.photos.map(img => ({
         url: img.src.large,
@@ -166,9 +166,9 @@ const fetchFromPexels = async (destination) => {
     return null;
   } catch (error) {
     if (error.response?.status === 429) {
-      console.log('⚠️ Pexels: Rate limit exceeded');
+      logger.warn('Pexels: Rate limit exceeded');
     } else {
-      console.log(`⚠️ Pexels error: ${error.message}`);
+      logger.debug(`Pexels error: ${error.message}`);
     }
     return null;
   }
@@ -186,7 +186,7 @@ const fetchFromPixabay = async (destination) => {
     const apiKey = process.env.PIXABAY_API_KEY;
     
     if (!apiKey) {
-      console.log('⚠️ Pixabay API key not configured');
+      logger.warn('Pixabay API key not configured');
       return null;
     }
 
@@ -205,7 +205,7 @@ const fetchFromPixabay = async (destination) => {
     });
 
     if (response.data.hits && response.data.hits.length > 0) {
-      console.log(`✅ Pixabay: Found ${response.data.hits.length} images`);
+      logger.debug(`Pixabay: Found ${response.data.hits.length} images`);
       
       return response.data.hits.map(img => ({
         url: img.largeImageURL,
@@ -224,9 +224,9 @@ const fetchFromPixabay = async (destination) => {
     return null;
   } catch (error) {
     if (error.response?.status === 429) {
-      console.log('⚠️ Pixabay: Rate limit exceeded');
+      logger.warn('Pixabay: Rate limit exceeded');
     } else {
-      console.log(`⚠️ Pixabay error: ${error.message}`);
+      logger.debug(`Pixabay error: ${error.message}`);
     }
     return null;
   }
@@ -280,14 +280,14 @@ const fetchFromWikimedia = async (destination) => {
         });
 
       if (images.length > 0) {
-        console.log(`✅ Wikimedia: Found ${images.length} images`);
+        logger.debug(`Wikimedia: Found ${images.length} images`);
         return images;
       }
     }
 
     return null;
   } catch (error) {
-    console.log(`⚠️ Wikimedia error: ${error.message}`);
+    logger.debug(`Wikimedia error: ${error.message}`);
     return null;
   }
 };
@@ -303,7 +303,7 @@ const fetchFromWikimedia = async (destination) => {
 const fetchDestinationImages = async (destination, options = {}) => {
   const { useCache = true } = options;
 
-  console.log(`\n🖼️  Fetching images for: ${destination}`);
+  logger.debug(`Fetching images for: ${destination}`);
 
   // Check cache first
   if (useCache) {
@@ -329,7 +329,7 @@ const fetchDestinationImages = async (destination, options = {}) => {
   ];
 
   for (const api of apis) {
-    console.log(`🔄 Trying ${api.name}...`);
+    logger.debug(`Trying ${api.name}...`);
     
     try {
       const images = await api.fetch(destination);
@@ -349,17 +349,17 @@ const fetchDestinationImages = async (destination, options = {}) => {
           setCachedImages(destination, result);
         }
 
-        console.log(`✅ Successfully fetched images from ${api.name}\n`);
+        logger.debug(`Successfully fetched images from ${api.name}`);
         return result;
       }
     } catch (error) {
-      console.log(`❌ ${api.name} failed: ${error.message}`);
+      logger.debug(`${api.name} failed: ${error.message}`);
       continue;
     }
   }
 
   // All APIs failed - return fallback response
-  console.log('⚠️ All image APIs failed, using fallback\n');
+  logger.warn('All image APIs failed, using fallback');
   
   return {
     success: false,
@@ -384,7 +384,7 @@ const fetchDestinationImages = async (destination, options = {}) => {
  * @returns {Promise<object>} Results for all destinations
  */
 const fetchMultipleDestinations = async (destinations) => {
-  console.log(`\n🌍 Fetching images for ${destinations.length} destinations...`);
+  logger.debug(`Fetching images for ${destinations.length} destinations...`);
 
   const results = await Promise.all(
     destinations.map(dest => fetchDestinationImages(dest))
@@ -410,7 +410,7 @@ const fetchMultipleDestinations = async (destinations) => {
 const clearImageCache = () => {
   const size = imageCache.size;
   imageCache.clear();
-  console.log(`🗑️  Cleared ${size} cached image entries`);
+  logger.debug(`Cleared ${size} cached image entries`);
   return { success: true, cleared: size };
 };
 
