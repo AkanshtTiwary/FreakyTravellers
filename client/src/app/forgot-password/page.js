@@ -104,14 +104,26 @@ export default function ForgotPasswordPage() {
                 <CheckCircle className="w-16 h-16 text-green-400" />
               </motion.div>
               <h2 className="text-2xl font-bold text-white mb-2">Check your email</h2>
-              <p className="text-dark-300 mb-6">
-                We sent a password reset link to <span className="text-accent-blue">{email}</span>
+              <p className="text-dark-300 mb-2">
+                We sent a password reset OTP to <span className="text-accent-blue font-semibold">{email}</span>
+              </p>
+              <p className="text-dark-400 text-sm mb-6">
+                The OTP will expire in 10 minutes.
               </p>
               <button
-                onClick={() => router.push('/login')}
-                className="btn-primary w-full"
+                onClick={() => router.push('/reset-password')}
+                className="btn-primary w-full mb-3"
               >
-                Back to Login
+                Enter OTP & Reset Password
+              </button>
+              <button
+                onClick={() => {
+                  setIsSubmitted(false);
+                  setEmail('');
+                }}
+                className="w-full px-4 py-2 rounded-lg border border-dark-600 text-dark-300 hover:text-accent-blue hover:border-accent-blue transition-colors text-sm"
+              >
+                Try Different Email
               </button>
             </div>
           )}
