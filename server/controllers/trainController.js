@@ -35,6 +35,24 @@ exports.getTrainsBetweenStations = asyncHandler(async (req, res) => {
     });
   }
 
+  // Check if this is a multi-hop route
+  if (result.is_multi_hop) {
+    return res.json({
+      success: true,
+      message: `Found multi-hop routes from ${from} to ${to}`,
+      data: result.data,
+      from_city: result.from_city,
+      to_city: result.to_city,
+      from_code: result.from_code,
+      to_code: result.to_code,
+      route_type: 'multi-hop',
+      is_direct: false,
+      details: 'Direct trains not available. Showing routes via intermediate stations.',
+      timestamp: result.timestamp,
+    });
+  }
+
+  // Direct route response
   res.json({
     success: true,
     message: `Found ${result.data.length} trains from ${from} to ${to}`,
@@ -43,6 +61,8 @@ exports.getTrainsBetweenStations = asyncHandler(async (req, res) => {
     to_city: result.to_city,
     from_code: result.from_code,
     to_code: result.to_code,
+    route_type: 'direct',
+    is_direct: true,
     timestamp: result.timestamp,
   });
 });
@@ -76,6 +96,24 @@ exports.getTrainsOnDate = asyncHandler(async (req, res) => {
     });
   }
 
+  // Handle multi-hop routes
+  if (result.is_multi_hop) {
+    return res.json({
+      success: true,
+      message: `Found multi-hop routes for ${date}`,
+      data: result.data,
+      date: result.date,
+      day_of_week: result.day_of_week,
+      from_city: result.from_city,
+      to_city: result.to_city,
+      route_type: 'multi-hop',
+      is_direct: false,
+      details: `Showing ${result.data.length} multi-hop route option(s) with available trains`,
+      timestamp: result.timestamp,
+    });
+  }
+
+  // Direct route response
   res.json({
     success: true,
     message: `Found ${result.data.length} trains running on ${date}`,
@@ -84,6 +122,8 @@ exports.getTrainsOnDate = asyncHandler(async (req, res) => {
     day_of_week: result.day_of_week,
     from_city: result.from_city,
     to_city: result.to_city,
+    route_type: 'direct',
+    is_direct: true,
     timestamp: result.timestamp,
   });
 });

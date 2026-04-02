@@ -101,30 +101,83 @@ const optimizeMultiDestinationTrip = async ({
       currentCity = nextCity;
     }
 
-    // ========== STEP 5: SELECT CHEAPEST TRAVEL OPTIONS ==========
-    console.log('\n✈️  Selecting cheapest travel options...');
+    // ========== STEP 5: SELECT TRAVEL OPTIONS WITH BUDGET-BASED PREFERENCE ==========
+    console.log('\n✈️  Selecting travel options (budget-aware)...');
 
     const selectedTravel = [];
     let totalTravelCost = 0;
 
     for (const leg of travelLegs) {
-      const allOptions = [...leg.flights, ...leg.trains];
+      // ==================== FIX #3: BUDGET-BASED PREFERENCE LOGIC ====================
+      // Calculate remaining budget available
+      const remainingBudget = totalBudget - totalTravelCost;
+      const budgetPerLeg = remainingBudget / (travelLegs.length - travelLegs.indexOf(leg));
+      
+      // Budget tier determination
+      const budgetTier = remainingBudget > 15000 ? 'premium' : remainingBudget > 8000 ? 'comfort' : 'budget';
+      
+      // Tag options with type for selection
+      const taggedFlights = leg.flights.map(f => ({
+        ...f,
+        type: 'flight',
+        costForGroup: (f.totalCost || f.price) * numberOfTravelers,
+      }));
+      
+      const taggedTrains = leg.trains.map(t => ({
+        ...t,
+        type: 'train',
+        costForGroup: (t.totalCost || t.price) * numberOfTravelers,
+      }));
 
-      if (allOptions.length === 0) {
+      // Preference logic based on budget tier
+      let selectedOption;
+      
+      if (budgetTier === 'premium') {
+        // Premium: Prefer flights for speed/comfort
+        console.log(`  💎 Premium budget (₹${remainingBudget}): Preferring flights...`);
+        const affordableFlights = taggedFlights.filter(f => f.costForGroup <= budgetPerLeg);
+        
+        if (affordableFlights.length > 0) {
+          // Pick fastest flight
+          selectedOption = affordableFlights.sort((a, b) => 
+            (parseInt(a.duration) || 10) - (parseInt(b.duration) || 10)
+          )[0];
+          console.log(`  ✈️  Selected flight: ₹${selectedOption.costForGroup}`);
+        } else if (taggedTrains.length > 0) {
+          // Fallback to trains if flights too expensive
+          selectedOption = taggedTrains.sort((a, b) => a.costForGroup - b.costForGroup)[0];
+          console.log(`  🚆 Fallback train: ₹${selectedOption.costForGroup}`);
+        }
+      } else if (budgetTier === 'comfort') {
+        // Comfort: Mix of flights and trains, prefer based on time/cost
+        console.log(`  💼 Comfort budget (₹${remainingBudget}): Balanced selection...`);
+        const affordableFlights = taggedFlights.filter(f => f.costForGroup <= budgetPerLeg * 1.1);
+        const affordableTrains = taggedTrains.filter(t => t.costForGroup <= budgetPerLeg);
+        
+        const validOptions = [...affordableFlights, ...affordableTrains];
+        if (validOptions.length > 0) {
+          // Sort by cost-efficiency (cost per hour)
+          selectedOption = validOptions.sort((a, b) => {
+            const costPerHourA = (a.costForGroup) / (parseInt(a.duration) || 8);
+            const costPerHourB = (b.costForGroup) / (parseInt(b.duration) || 8);
+            return costPerHourA - costPerHourB;
+          })[0];
+          console.log(`  ${selectedOption.type === 'flight' ? '✈️' : '🚆'} Selected: ₹${selectedOption.costForGroup}`);
+        }
+      } else {
+        // Budget: Prefer trains (cheapest option)
+        console.log(`  💰 Budget tier (₹${remainingBudget}): Prioritizing cost...`);
+        const allOptions = [...taggedFlights, ...taggedTrains];
+        selectedOption = allOptions.sort((a, b) => a.costForGroup - b.costForGroup)[0];
+        console.log(`  ${selectedOption.type === 'flight' ? '✈️' : '🚆'} Selected: ₹${selectedOption.costForGroup}`);
+      }
+
+      if (!selectedOption) {
         console.log(`⚠️ No travel options found for ${leg.from} → ${leg.to}`);
         continue;
       }
 
-      // Sort by total cost (ascending)
-      allOptions.sort((a, b) => {
-        const costA = (a.totalCost || a.price) * numberOfTravelers;
-        const costB = (b.totalCost || b.price) * numberOfTravelers;
-        return costA - costB;
-      });
-
-      // Select cheapest option
-      const cheapest = allOptions[0];
-      const costForAllTravelers = (cheapest.totalCost || cheapest.price) * numberOfTravelers;
+      const costForAllTravelers = selectedOption.costForGroup;
 
       selectedTravel.push({
         from: leg.from,

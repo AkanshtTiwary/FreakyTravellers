@@ -66,11 +66,12 @@ free sightseeing, and the cheapest local food. Clearly label this as the minimum
     ? `\n${railContext}\n`
     : '';
 
+  // ==================== FIX #3: BUDGET-AWARE TRANSPORT PRIORITIZATION ====================
   const transportRule = isIndianRoute
     ? `TRANSPORT RULE: This is an Indian route. ${railContext
-        ? 'Use the LIVE TRAIN DATA above as your primary transport options — these are real trains you MUST include.'
-        : 'Include well-known InterCity Express / Rajdhani / Shatabdi trains as appropriate.'} Also include buses and flights based on distance and budget tier.`
-    : 'TRANSPORT RULE: Include all relevant transport types for this international/non-Indian route.';
+        ? `Use LIVE TRAIN DATA above. PRIORITIZE BASED ON BUDGET:\n  - HIGH BUDGET (>₹15k): Prefer flights for speed/comfort + include trains as alternatives\n  - MEDIUM BUDGET (₹8k-₹15k): Mix flights and trains - choose best value\n  - LOW BUDGET (<₹8k): Prioritize trains and buses (cheapest) + mention flights if available\n  Include real trains: ${railContext}`
+        : `PRIORITIZE BY BUDGET:\n  - HIGH BUDGET: Suggest flights + premium trains (Rajdhani/Shatabdi)\n  - MEDIUM BUDGET: Mix indicity Express with flights\n  - LOW BUDGET: Recommend Express/Passenger trains + buses`} Also include buses as backup.`
+    : 'TRANSPORT RULE: Include all relevant transport types. For high budgets, prefer flights for time savings.'
 
   const userPrompt = `Plan a complete trip from ${source} to ${destination} for ${travelers} traveler(s).
 Total budget: ${budget} ${currency}.
