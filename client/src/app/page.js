@@ -90,6 +90,25 @@ export default function Home() {
         </motion.div>
       )}
 
+      {/* Tier 1 Cities Info Section */}
+      <section className="py-8 px-4 bg-gradient-to-r from-dark-700 via-dark-800 to-dark-700 border-y border-dark-600">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="flex items-center justify-center gap-4 flex-wrap text-center"
+          >
+            <div className="text-3xl">ℹ️</div>
+            <div>
+              <p className="text-dark-200">
+                <span className="font-semibold text-white">Service Coverage:</span> Currently available for <span className="font-bold text-accent-blue">Tier 1 cities</span> • More cities coming soon
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Features Section */}
       <section className="py-20 px-4 relative">
         <div className="max-w-7xl mx-auto">

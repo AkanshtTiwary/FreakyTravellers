@@ -412,8 +412,8 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
   const otp = user.generateOTP();
   await user.save();
 
-  // Send OTP email
-  await sendOTPEmail(email, otp);
+  // Send OTP email with 'forgotPassword' context
+  await sendOTPEmail(email, otp, 'forgotPassword');
 
   res.status(200).json({
     success: true,

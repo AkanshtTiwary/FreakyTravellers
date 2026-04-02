@@ -22,18 +22,41 @@ const createTransporter = () => {
 };
 
 /**
- * Send OTP email
+ * Send OTP email with context-aware templates
  * @param {string} email - Recipient email
  * @param {string} otp - OTP code
+ * @param {string} type - Email type: 'signup' or 'forgotPassword'
  * @returns {Promise<void>}
  */
-const sendOTPEmail = async (email, otp) => {
+const sendOTPEmail = async (email, otp, type = 'signup') => {
   const transporter = createTransporter();
+
+  // Email templates based on type
+  const templates = {
+    signup: {
+      subject: 'Email Verification - OTP',
+      headerTitle: 'Email Verification',
+      header: '✈️ FreakyTravellers',
+      heading: 'Welcome to FreakyTravellers!',
+      message: 'Thank you for signing up. Please use the following OTP to verify your email address:',
+      footer: 'Happy travels! 🌍',
+    },
+    forgotPassword: {
+      subject: 'Password Reset OTP - FreakyTravellers',
+      headerTitle: 'Password Reset',
+      header: '✈️ FreakyTravellers',
+      heading: 'Password Reset Request',
+      message: 'We received a request to reset your password. Please use the following OTP to reset your password:',
+      footer: 'If you didn\'t request this, you can safely ignore this email.',
+    },
+  };
+
+  const template = templates[type] || templates.signup;
 
   const mailOptions = {
     from: `FreakyTravellers <${process.env.EMAIL_FROM}>`,
     to: email,
-    subject: 'Email Verification - OTP',
+    subject: template.subject,
     html: `
       <!DOCTYPE html>
       <html>
@@ -51,12 +74,12 @@ const sendOTPEmail = async (email, otp) => {
       <body>
         <div class="container">
           <div class="header">
-            <h1>✈️ FreakyTravellers</h1>
-            <p>Email Verification</p>
+            <h1>${template.header}</h1>
+            <p>${template.headerTitle}</p>
           </div>
           <div class="content">
-            <h2>Welcome to FreakyTravellers!</h2>
-            <p>Thank you for signing up. Please use the following OTP to verify your email address:</p>
+            <h2>${template.heading}</h2>
+            <p>${template.message}</p>
             <div class="otp-box">
               <p style="margin: 0; font-size: 14px; color: #666;">Your OTP Code:</p>
               <div class="otp-code">${otp}</div>
@@ -65,7 +88,7 @@ const sendOTPEmail = async (email, otp) => {
             <p>If you didn't request this OTP, please ignore this email.</p>
             <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
             <p style="font-size: 14px; color: #666;">
-              Happy travels! 🌍<br>
+              ${template.footer}<br>
               The FreakyTravellers Team
             </p>
           </div>
@@ -80,7 +103,7 @@ const sendOTPEmail = async (email, otp) => {
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`✉️ OTP email sent to: ${email}`);
+    console.log(`✉️ OTP email (${type}) sent to: ${email}`);
   } catch (error) {
     console.error(`❌ Error sending email: ${error.message}`);
     throw new Error('Failed to send OTP email');
