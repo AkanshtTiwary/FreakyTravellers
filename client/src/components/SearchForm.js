@@ -57,11 +57,33 @@ function SearchForm() {
         // Navigate to results page
         router.push(`/results?tripId=${response.data.tripId}`);
       } else {
-        toast.error(response.message || 'Failed to optimize trip');
+        // Handle non-success response from API
+        if (response.type === 'international_destination' || response.type === 'international_source') {
+          toast.error(response.message, {
+            duration: 4000,
+            icon: '🇮🇳',
+          });
+        } else {
+          toast.error(response.message || 'Failed to optimize trip');
+        }
       }
     } catch (error) {
       console.error('Optimization error:', error);
-      toast.error(error || 'Failed to optimize trip. Please try again.');
+      
+      // Error object now contains the full response data from API
+      const errorMessage = error?.message || 'Failed to optimize trip. Please try again.';
+      const errorType = error?.type;
+      
+      // Show special message for India-only service
+      if (errorType === 'international_destination' || errorType === 'international_source' || 
+          errorMessage.includes('currently available in India')) {
+        toast.error(errorMessage, {
+          duration: 4000,
+          icon: '🇮🇳',
+        });
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setIsSearching(false);
       setLoading(false);
@@ -76,6 +98,17 @@ function SearchForm() {
           <h2 className="text-2xl font-bold text-white text-center">
             Plan Your Budget Trip
           </h2>
+        </div>
+
+        {/* Info Banner for India-only service */}
+        <div className="mb-6 p-4 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 border border-blue-500/30 rounded-lg flex items-start gap-3">
+          <span className="text-2xl">🇮🇳</span>
+          <div>
+            <p className="text-sm text-blue-100 font-medium">Currently Available in India</p>
+            <p className="text-xs text-blue-200 mt-1">
+              We support travel planning for destinations across India. International destinations coming soon!
+            </p>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 mb-6">

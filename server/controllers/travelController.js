@@ -9,6 +9,7 @@ const { optimizeMultiDestinationTrip } = require('../services/multiDestinationOp
 const { asyncHandler } = require('../middleware/errorHandler');
 const { formatTime, formatDuration } = require('../utils/dateFormatter');
 const logger = require('../utils/logger');
+const { validateIndianDestinations } = require('../utils/indianCities');
 
 /**
  * @desc    Optimize trip based on budget
@@ -21,6 +22,16 @@ exports.optimizeTrip = asyncHandler(async (req, res) => {
   logger.debug(`Trip optimization started: ${source} → ${destination}`);
   logger.debug(`Budget: ₹${totalBudget}, Travelers: ${numberOfTravelers}`);
   if (numberOfDays) logger.debug(`Days: ${numberOfDays}}`);
+
+  // Validate that both source and destination are in India
+  const validation = validateIndianDestinations(source, destination);
+  if (!validation.isValid) {
+    return res.status(400).json({
+      success: false,
+      message: validation.message,
+      type: validation.type,
+    });
+  }
 
   // Run optimization algorithm
   const optimizationResult = await optimizeTripBudget({
@@ -274,6 +285,27 @@ exports.optimizeMultiDestinationTrip = asyncHandler(async (req, res) => {
       success: false,
       message: 'Travel dates must include startDate and endDate',
     });
+  }
+
+  // Validate that start city and all destinations are in India
+  const startValidation = validateIndianDestinations(startCity, startCity);
+  if (!startValidation.isValid) {
+    return res.status(400).json({
+      success: false,
+      message: `Starting city must be in India: ${startValidation.message}`,
+      type: 'international_source',
+    });
+  }
+
+  for (const dest of destinations) {
+    const destValidation = validateIndianDestinations(startCity, dest);
+    if (!destValidation.isValid) {
+      return res.status(400).json({
+        success: false,
+        message: `🇮🇳 We are currently available in India only. "${dest}" is not supported. Please select destinations within India.`,
+        type: 'international_destination',
+      });
+    }
   }
 
   console.log(`\n🚀 Starting multi-destination trip optimization...`);

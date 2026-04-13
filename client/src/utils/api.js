@@ -52,14 +52,14 @@ api.interceptors.response.use(
         }
       }
       
-      // Return error message from server
-      return Promise.reject(data.message || 'An error occurred');
+      // Return full error data object (not just message) so we can access error type
+      return Promise.reject(data || { message: 'An error occurred' });
     } else if (error.request) {
       // Request made but no response
-      return Promise.reject('Network error. Please check your connection.');
+      return Promise.reject({ message: 'Network error. Please check your connection.' });
     } else {
       // Something else happened
-      return Promise.reject(error.message || 'An unexpected error occurred');
+      return Promise.reject({ message: error.message || 'An unexpected error occurred' });
     }
   }
 );

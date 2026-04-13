@@ -9,6 +9,7 @@ const { allocateBudget }                   = require('../services/budgetAllocato
 const { buildTravelPlanPrompt }            = require('../services/aiPromptBuilder.service');
 const { generateTravelPlan }               = require('../services/travelPlanAI.service');
 const { asyncHandler }                     = require('../middleware/errorHandler');
+const { validateIndianDestinations }       = require('../utils/indianCities');
 
 // ---------------------------------------------------------------------------
 // Helper: build + call AI plan
@@ -69,6 +70,16 @@ exports.generatePlan = asyncHandler(async (req, res) => {
   } = req.body;
 
   console.log(`\n🗺️  Travel Plan Request: ${source} → ${destination} | Budget: ${budget} ${currency} | Travelers: ${travelers}`);
+
+  // Validate that both source and destination are in India
+  const validation = validateIndianDestinations(source, destination);
+  if (!validation.isValid) {
+    return res.status(400).json({
+      success: false,
+      message: validation.message,
+      type: validation.type,
+    });
+  }
 
   const { plan, aiSource, classification } = await buildAndGeneratePlan({
     source, destination,
