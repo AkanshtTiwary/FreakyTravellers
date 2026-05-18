@@ -65,7 +65,10 @@ const useAuthStore = create(
         getItem: (name) => {
           if (typeof window === 'undefined') return null;
           const value = localStorage.getItem(name);
-          console.log('Zustand getItem:', name, value ? 'found' : 'not found');
+          // Only log if value is found to avoid noisy warnings on first load
+          if (value) {
+            console.log('Zustand getItem:', name, 'found');
+          }
           return value;
         },
         setItem: (name, value) => {
