@@ -1,0 +1,31 @@
+{
+  "Version": "1.0",
+  "env": {
+    "backend": {
+      "phases": {
+        "preBuild": {
+          "commands": [
+            "echo Installing dependencies",
+            "npm ci"
+          ]
+        },
+        "build": {
+          "commands": [
+            "echo Build complete"
+          ]
+        }
+      },
+      "artifacts": {
+        "baseDirectory": "/",
+        "files": [
+          "**/*"
+        ]
+      },
+      "cache": {
+        "paths": [
+          "node_modules/**/*"
+        ]
+      }
+    }
+  }
+}
