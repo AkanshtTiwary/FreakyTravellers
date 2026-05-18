@@ -1,0 +1,170 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:latest
+    container_name: travelbudget-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: travelbudget
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - travelbudget-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # API Gateway
+  gateway:
+    build:
+      context: ./services/gateway
+      dockerfile: Dockerfile
+    container_name: travelbudget-gateway
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: development
+      PORT: 5000
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+      AUTH_SERVICE_URL: http://auth-service:5001
+      TRAVEL_SERVICE_URL: http://travel-service:5002
+      TRAIN_SERVICE_URL: http://train-service:5003
+      PAYMENT_SERVICE_URL: http://payment-service:5004
+    depends_on:
+      - auth-service
+      - travel-service
+      - train-service
+      - payment-service
+    networks:
+      - travelbudget-network
+    healthcheck:
+      test: curl -f http://localhost:5000/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Auth Service
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile
+    container_name: travelbudget-auth
+    ports:
+      - "5001:5001"
+    environment:
+      NODE_ENV: development
+      PORT: 5001
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/travelbudget?authSource=admin
+      JWT_SECRET: your_jwt_secret_key_change_in_production
+      JWT_EXPIRE: 7d
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: 587
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - travelbudget-network
+    healthcheck:
+      test: curl -f http://localhost:5001/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Travel Service
+  travel-service:
+    build:
+      context: ./services/travel-service
+      dockerfile: Dockerfile
+    container_name: travelbudget-travel
+    ports:
+      - "5002:5002"
+    environment:
+      NODE_ENV: development
+      PORT: 5002
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/travelbudget?authSource=admin
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - travelbudget-network
+    healthcheck:
+      test: curl -f http://localhost:5002/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Train Service
+  train-service:
+    build:
+      context: ./services/train-service
+      dockerfile: Dockerfile
+    container_name: travelbudget-train
+    ports:
+      - "5003:5003"
+    environment:
+      NODE_ENV: development
+      PORT: 5003
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/travelbudget?authSource=admin
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - travelbudget-network
+    healthcheck:
+      test: curl -f http://localhost:5003/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Payment Service
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+    container_name: travelbudget-payment
+    ports:
+      - "5004:5004"
+    environment:
+      NODE_ENV: development
+      PORT: 5004
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/travelbudget?authSource=admin
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - travelbudget-network
+    healthcheck:
+      test: curl -f http://localhost:5004/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+networks:
+  travelbudget-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+  mongodb_config:
