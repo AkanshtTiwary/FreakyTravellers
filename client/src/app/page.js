@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { motion } from 'framer-motion';
-import { Plane, DollarSign, MapPin, TrendingUp, Sparkles, Clock, Shield, X } from 'lucide-react';
+import { Plane, DollarSign, MapPin, TrendingUp, Sparkles, Clock, Shield } from 'lucide-react';
 import DestinationCarousel from '@/components/DestinationCarousel';
 
 // Animation variants for performance
@@ -26,16 +25,6 @@ const staggerContainer = {
 
 export default function Home() {
   const router = useRouter();
-  const [showTier1Modal, setShowTier1Modal] = useState(false);
-
-  useEffect(() => {
-    // Check if the modal has been shown before
-    const hasShownTier1Modal = localStorage.getItem('tier1ModalShown');
-    if (!hasShownTier1Modal) {
-      setShowTier1Modal(true);
-      localStorage.setItem('tier1ModalShown', 'true');
-    }
-  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-dark">
@@ -43,52 +32,6 @@ export default function Home() {
       
       {/* Hero + Destination Carousel combined */}
       <DestinationCarousel />
-
-      {/* Tier 1 Cities Modal Popup */}
-      {showTier1Modal && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          onClick={() => setShowTier1Modal(false)}
-        >
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="card-glass max-w-md w-full p-8 relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close button */}
-            <button
-              onClick={() => setShowTier1Modal(false)}
-              className="absolute top-4 right-4 text-dark-300 hover:text-white transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-
-            {/* Content */}
-            <div className="text-center">
-              <div className="text-5xl mb-4">ℹ️</div>
-              <h2 className="text-2xl font-bold text-white mb-4">Service Availability</h2>
-              <p className="text-dark-200 mb-6 leading-relaxed">
-                Due to lack of localized data, we are currently available for <span className="font-bold text-accent-blue">Tier 1 cities</span> only.
-              </p>
-              <p className="text-dark-300 text-sm mb-6">
-                We're expanding to more cities soon! Stay tuned.
-              </p>
-              <button
-                onClick={() => setShowTier1Modal(false)}
-                className="w-full bg-gradient-accent hover:shadow-[0_0_30px_rgba(29,155,240,0.4)] text-white font-semibold py-3 rounded-lg transition-all duration-300"
-              >
-                Got It!
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
 
       {/* Tier 1 Cities Info Section */}
       <section className="py-8 px-4 bg-gradient-to-r from-dark-700 via-dark-800 to-dark-700 border-y border-dark-600">
