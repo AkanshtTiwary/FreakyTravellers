@@ -1,0 +1,18 @@
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const app = express();
+app.use(helmet());
+app.use(cors({ origin: process.env.ALLOWED_ORIGINS?.split(',') || '*', credentials: true }));
+app.use(express.json());
+if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
+const transports = new Map();
+app.get('/', (req, res) => res.json({ success: true, service: 'transport-service', version: '1.0.0' }));
+app.get('/health', (req, res) => res.json({ success: true, service: 'transport-service', timestamp: new Date().toISOString() }));
+app.post('/api/transport/search', (req, res) => { const { source, destination, date, passengers = 1 } = req.body; if (!source || !destination) return res.status(400).json({ success: false, message: 'source and destination are required' }); const options = [{ id: `road-${Date.now()}`, mode: 'bus', provider: 'TravelBudget', source, destination, date: date || null, passengers: Number(passengers), estimatedCost: Number(passengers) * 500, currency: 'INR' }]; res.json({ success: true, count: options.length, transport: options }); });
+app.get('/api/transport/:transportId', (req, res) => { const transport = transports.get(req.params.transportId); if (!transport) return res.status(404).json({ success: false, message: 'Transport option not found' }); res.json({ success: true, transport }); });
+app.post('/api/transport/:transportId/book', (req, res) => { const booking = { id: `booking-${Date.now()}`, transportId: req.params.transportId, status: 'pending', ...req.body, createdAt: new Date().toISOString() }; transports.set(req.params.transportId, booking); res.status(201).json({ success: true, booking }); });
+app.use((req, res) => res.status(404).json({ success: false, message: 'Route not found' }));
+app.listen(process.env.PORT || 5005, () => console.log(`Transport Service running on port ${process.env.PORT || 5005}`));
