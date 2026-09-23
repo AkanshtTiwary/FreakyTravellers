@@ -32,6 +32,9 @@ const services = {
   travel: process.env.TRAVEL_SERVICE_URL || 'http://travel-service:5002',
   train: process.env.TRAIN_SERVICE_URL || 'http://train-service:5003',
   payment: process.env.PAYMENT_SERVICE_URL || 'http://payment-service:5004',
+  transport: process.env.TRANSPORT_SERVICE_URL || 'http://transport-service:5005',
+  facilities: process.env.FACILITIES_SERVICE_URL || 'http://facilities-service:5006',
+  images: process.env.IMAGE_SERVICE_URL || 'http://image-service:5007',
 };
 
 // ==================== ROUTES ====================
@@ -47,6 +50,9 @@ app.get('/', (req, res) => {
       travel: `${services.travel}/health`,
       train: `${services.train}/health`,
       payment: `${services.payment}/health`,
+      transport: `${services.transport}/health`,
+      facilities: `${services.facilities}/health`,
+      images: `${services.images}/health`,
     },
   });
 });
@@ -136,12 +142,12 @@ app.use(
 app.use(
   '/api/transport',
   createProxyMiddleware({
-    target: services.train,
+    target: services.transport,
     changeOrigin: true,
     pathRewrite: { '^/api/transport': '/api/transport' },
     onError: (err, req, res) => {
-      console.error('Train Service Error:', err);
-      res.status(503).json({ success: false, message: 'Train Service unavailable' });
+      console.error('Transport Service Error:', err);
+      res.status(503).json({ success: false, message: 'Transport Service unavailable' });
     },
   })
 );
@@ -149,12 +155,25 @@ app.use(
 app.use(
   '/api/facilities',
   createProxyMiddleware({
-    target: services.train,
+    target: services.facilities,
     changeOrigin: true,
     pathRewrite: { '^/api/facilities': '/api/facilities' },
     onError: (err, req, res) => {
-      console.error('Train Service Error:', err);
-      res.status(503).json({ success: false, message: 'Train Service unavailable' });
+      console.error('Facilities Service Error:', err);
+      res.status(503).json({ success: false, message: 'Facilities Service unavailable' });
+    },
+  })
+);
+
+app.use(
+  '/api/images',
+  createProxyMiddleware({
+    target: services.images,
+    changeOrigin: true,
+    pathRewrite: { '^/api/images': '/api/images' },
+    onError: (err, req, res) => {
+      console.error('Image Service Error:', err);
+      res.status(503).json({ success: false, message: 'Image Service unavailable' });
     },
   })
 );
@@ -201,5 +220,8 @@ app.listen(PORT, () => {
   console.log(`   - Travel Service:  ${services.travel}`);
   console.log(`   - Train Service:   ${services.train}`);
   console.log(`   - Payment Service: ${services.payment}`);
+  console.log(`   - Transport Service: ${services.transport}`);
+  console.log(`   - Facilities Service: ${services.facilities}`);
+  console.log(`   - Image Service: ${services.images}`);
   console.log(`${'='.repeat(60)}\n`);
 });
