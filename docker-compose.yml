@@ -39,11 +39,17 @@ services:
       TRAVEL_SERVICE_URL: http://travel-service:5002
       TRAIN_SERVICE_URL: http://train-service:5003
       PAYMENT_SERVICE_URL: http://payment-service:5004
+      TRANSPORT_SERVICE_URL: http://transport-service:5005
+      FACILITIES_SERVICE_URL: http://facilities-service:5006
+      IMAGE_SERVICE_URL: http://image-service:5007
     depends_on:
       - auth-service
       - travel-service
       - train-service
       - payment-service
+      - transport-service
+      - facilities-service
+      - image-service
     networks:
       - travelbudget-network
     healthcheck:
@@ -156,6 +162,69 @@ services:
       - travelbudget-network
     healthcheck:
       test: curl -f http://localhost:5004/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Transport Service
+  transport-service:
+    build:
+      context: ./services/transport-service
+      dockerfile: Dockerfile
+    container_name: travelbudget-transport
+    ports:
+      - "5005:5005"
+    environment:
+      NODE_ENV: development
+      PORT: 5005
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+    networks:
+      - travelbudget-network
+    healthcheck:
+      test: curl -f http://localhost:5005/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Facilities Service
+  facilities-service:
+    build:
+      context: ./services/facilities-service
+      dockerfile: Dockerfile
+    container_name: travelbudget-facilities
+    ports:
+      - "5006:5006"
+    environment:
+      NODE_ENV: development
+      PORT: 5006
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+    networks:
+      - travelbudget-network
+    healthcheck:
+      test: curl -f http://localhost:5006/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Image Service
+  image-service:
+    build:
+      context: ./services/image-service
+      dockerfile: Dockerfile
+    container_name: travelbudget-image
+    ports:
+      - "5007:5007"
+    environment:
+      NODE_ENV: development
+      PORT: 5007
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+    networks:
+      - travelbudget-network
+    healthcheck:
+      test: curl -f http://localhost:5007/health || exit 1
       interval: 30s
       timeout: 10s
       retries: 3
