@@ -5,7 +5,7 @@
 
 const INDIAN_CITIES = [
   // Major Cities
-  'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune',
+  'Mumbai', 'Delhi', 'Bangalore', 'Bengaluru', 'Banglore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune',
   'Ahmedabad', 'Jaipur', 'Lucknow', 'Chandigarh', 'Indore', 'Bhopal', 'Visakhapatnam',
   'Surat', 'Nagpur', 'Ghaziabad', 'Ludhiana', 'Kochi', 'Mathura', 'Agra',
   'Varanasi', 'Goa', 'Udaipur', 'Jodhpur', 'Shimla', 'Manali', 'Darjeeling',

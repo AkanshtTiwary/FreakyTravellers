@@ -62,6 +62,7 @@ const STATION_CODES = {
   // South India
   'bangalore': 'SBC',
   'bengaluru': 'SBC',
+  'banglore': 'SBC',
   'mysore': 'MYS',
   'mysuru': 'MYS',
   'chennai': 'MAS',
