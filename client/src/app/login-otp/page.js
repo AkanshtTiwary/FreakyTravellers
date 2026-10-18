@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, Loader2, ArrowLeft, KeyRound, Send, CheckCircle } from 'lucide-react';
-import { authAPI } from '@/utils/api';
+import { authAPI, getErrorMessage } from '@/utils/api';
 import useAuthStore from '@/store/authStore';
 import toast from 'react-hot-toast';
 
@@ -33,7 +33,7 @@ export default function OTPLoginPage() {
       }
     } catch (error) {
       console.error('Send OTP error:', error);
-      toast.error(error || 'Failed to send OTP');
+      toast.error(getErrorMessage(error, 'Failed to send OTP'));
     } finally {
       setIsLoading(false);
     }
@@ -58,7 +58,7 @@ export default function OTPLoginPage() {
       }
     } catch (error) {
       console.error('OTP verification error:', error);
-      toast.error(error || 'Invalid or expired OTP');
+      toast.error(getErrorMessage(error, 'Invalid or expired OTP'));
     } finally {
       setIsLoading(false);
     }
@@ -72,7 +72,7 @@ export default function OTPLoginPage() {
         toast.success('OTP resent successfully!');
       }
     } catch (error) {
-      toast.error(error || 'Failed to resend OTP');
+      toast.error(getErrorMessage(error, 'Failed to resend OTP'));
     } finally {
       setIsLoading(false);
     }

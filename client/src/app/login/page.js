@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Loader2, Eye, EyeOff, Key } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
-import { authAPI } from '@/utils/api';
+import { authAPI, getErrorMessage } from '@/utils/api';
 import useAuthStore from '@/store/authStore';
 import toast from 'react-hot-toast';
 
@@ -48,7 +48,7 @@ export default function LoginPage() {
       }
     } catch (error) {
       console.error('Login error:', error);
-      toast.error(error || 'Login failed');
+      toast.error(getErrorMessage(error, 'Login failed'));
     } finally {
       setIsLoading(false);
     }
@@ -71,7 +71,7 @@ export default function LoginPage() {
       }
     } catch (error) {
       console.error('Google login error:', error);
-      toast.error(error || 'Google login failed');
+      toast.error(getErrorMessage(error, 'Google login failed'));
     }
   };
 

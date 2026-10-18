@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { User, Mail, Lock, Phone, Loader2, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
-import { authAPI } from '@/utils/api';
+import { authAPI, getErrorMessage } from '@/utils/api';
 import useAuthStore from '@/store/authStore';
 import toast from 'react-hot-toast';
 
@@ -49,7 +49,7 @@ export default function SignupPage() {
       }
     } catch (error) {
       console.error('Google signup error:', error);
-      toast.error(error || 'Google signup failed');
+      toast.error(getErrorMessage(error, 'Google signup failed'));
     }
   };
 
@@ -90,7 +90,7 @@ export default function SignupPage() {
         setStep(2); // Move to OTP verification
       }
     } catch (error) {
-      toast.error(error || 'Signup failed');
+      toast.error(getErrorMessage(error, 'Signup failed'));
     } finally {
       setIsLoading(false);
     }
@@ -121,7 +121,7 @@ export default function SignupPage() {
       }
     } catch (error) {
       console.error('OTP verification error:', error);
-      toast.error(error || 'OTP verification failed');
+      toast.error(getErrorMessage(error, 'OTP verification failed'));
     } finally {
       setIsLoading(false);
     }
@@ -132,7 +132,7 @@ export default function SignupPage() {
       await authAPI.sendOTP(formData.email);
       toast.success('OTP resent to your email');
     } catch (error) {
-      toast.error(error || 'Failed to resend OTP');
+      toast.error(getErrorMessage(error, 'Failed to resend OTP'));
     }
   };
 

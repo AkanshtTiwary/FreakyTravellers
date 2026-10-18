@@ -7,6 +7,18 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
 
+export const getErrorMessage = (error, fallback) => {
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  if (error && typeof error.message === 'string') {
+    return error.message;
+  }
+
+  return fallback;
+};
+
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,

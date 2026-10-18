@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Mail, Loader2, ArrowLeft, CheckCircle } from 'lucide-react';
-import { authAPI } from '@/utils/api';
+import { authAPI, getErrorMessage } from '@/utils/api';
 import toast from 'react-hot-toast';
 
 export default function ForgotPasswordPage() {
@@ -25,7 +25,7 @@ export default function ForgotPasswordPage() {
         toast.success('Password reset email sent!');
       }
     } catch (error) {
-      toast.error(error || 'Failed to send reset email. Please try again.');
+      toast.error(getErrorMessage(error, 'Failed to send reset email. Please try again.'));
     } finally {
       setIsLoading(false);
     }

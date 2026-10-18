@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Loader2, ArrowLeft, CheckCircle, Eye, EyeOff } from 'lucide-react';
-import { authAPI } from '@/utils/api';
+import { authAPI, getErrorMessage } from '@/utils/api';
 import toast from 'react-hot-toast';
 
 export default function ResetPasswordPage() {
@@ -85,7 +85,7 @@ export default function ResetPasswordPage() {
         }, 2000);
       }
     } catch (error) {
-      toast.error(error || 'Failed to reset password. Please try again.');
+      toast.error(getErrorMessage(error, 'Failed to reset password. Please try again.'));
     } finally {
       setIsLoading(false);
     }
