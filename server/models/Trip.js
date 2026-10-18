@@ -130,7 +130,7 @@ const tripSchema = new mongoose.Schema(
     accommodation: {
       type: {
         type: String,
-        enum: ['hotel', 'hostel', 'guesthouse', 'resort', 'airbnb'],
+        enum: ['hotel', 'hostel', 'guesthouse', 'resort', 'airbnb', 'dharamshala'],
         default: 'hotel',
       },
       name: String,

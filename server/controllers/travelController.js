@@ -119,8 +119,19 @@ exports.optimizeTrip = asyncHandler(async (req, res) => {
 
   // Add accommodation if found
   if (optimizationResult.accommodation) {
+    const accommodationType = [
+      'hotel',
+      'hostel',
+      'guesthouse',
+      'resort',
+      'airbnb',
+      'dharamshala',
+    ].includes(optimizationResult.accommodation.type)
+      ? optimizationResult.accommodation.type
+      : 'hotel';
+
     tripData.accommodation = {
-      type: optimizationResult.accommodation.type,
+      type: accommodationType,
       name: optimizationResult.accommodation.name,
       rating: optimizationResult.accommodation.rating,
       location: optimizationResult.accommodation.location,
